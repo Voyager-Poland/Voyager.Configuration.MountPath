@@ -6,5 +6,12 @@
 		{
 			return new Settings();
 		}
+
+		internal static Settings PrepareDefault()
+		{
+
+			var prov = new SettingsProvider();
+			return prov.GetSettings();
+		}
 	}
 }

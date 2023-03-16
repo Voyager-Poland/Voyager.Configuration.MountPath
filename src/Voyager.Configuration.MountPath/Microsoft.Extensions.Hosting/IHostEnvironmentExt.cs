@@ -8,5 +8,10 @@ namespace Microsoft.Extensions.Hosting
 		{
 			return new HostEnvironmentSettings(env);
 		}
+
+		public static SettingsProvider GetSettingsProviderForce(this IHostEnvironment env)
+		{
+			return new ForceHostEnvironmentSettings(env);
+		}
 	}
 }

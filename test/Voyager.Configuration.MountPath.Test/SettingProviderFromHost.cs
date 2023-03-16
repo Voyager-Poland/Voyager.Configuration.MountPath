@@ -21,7 +21,6 @@ public class SettingProviderFromHost : IHostEnvironment
 	[Test]
 	public void CheckSettings()
 	{
-
 		Settings settings = provider.GetSettings();
 		Assert.IsNotNull(settings);
 		Assert.That(settings.HostingName, Is.EqualTo(HOSTINGNAME));

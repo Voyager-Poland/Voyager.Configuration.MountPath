@@ -19,4 +19,18 @@ namespace Voyager.Configuration.MountPath
 			return settings;
 		}
 	}
+
+
+	internal class ForceHostEnvironmentSettings : HostEnvironmentSettings
+	{
+		public ForceHostEnvironmentSettings(IHostEnvironment hostEnvironment) : base(hostEnvironment)
+		{
+		}
+		public override Settings GetSettings()
+		{
+			var settings = base.GetSettings();
+			settings.Optional = false;
+			return settings;
+		}
+	}
 }

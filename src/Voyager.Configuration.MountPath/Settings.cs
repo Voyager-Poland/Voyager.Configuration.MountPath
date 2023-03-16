@@ -1,4 +1,6 @@
-﻿namespace Voyager.Configuration.MountPath
+﻿using System.IO;
+
+namespace Voyager.Configuration.MountPath
 {
 	public class Settings
 	{
@@ -9,9 +11,9 @@
 			HostingName = "Development";
 			CurrentDirectory = Directory.GetCurrentDirectory();
 		}
-		public String CurrentDirectory { get; set; }
-		public String FileName { get; set; }
-		public String ConfigMountPath { get; set; }
-		public String HostingName { get; set; }
+		public string CurrentDirectory { get; set; }
+		public string FileName { get; set; }
+		public string ConfigMountPath { get; set; }
+		public string HostingName { get; set; }
 	}
 }

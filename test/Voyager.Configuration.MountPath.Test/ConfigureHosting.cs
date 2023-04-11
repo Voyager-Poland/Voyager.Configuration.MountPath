@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal partial class ConfigureHosting
+	internal class ConfigureHosting
 	{
 		private IHost host;
 
@@ -14,9 +14,9 @@ namespace Voyager.Configuration.MountPath.Test
 
 			PrepareConfiguration(builder);
 
-			builder.ConfigureServices(lista =>
+			builder.ConfigureServices(services =>
 			{
-				lista.AddTransient<ConfigUser>();
+				services.AddTransient<ConfigUser>();
 			});
 			this.host = builder.Build();
 		}

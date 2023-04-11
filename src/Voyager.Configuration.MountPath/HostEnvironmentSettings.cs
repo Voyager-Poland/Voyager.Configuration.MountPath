@@ -26,6 +26,7 @@ namespace Voyager.Configuration.MountPath
 		public ForceHostEnvironmentSettings(IHostEnvironment hostEnvironment) : base(hostEnvironment)
 		{
 		}
+
 		public override Settings GetSettings()
 		{
 			var settings = base.GetSettings();

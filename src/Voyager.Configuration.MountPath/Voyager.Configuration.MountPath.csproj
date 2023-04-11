@@ -5,6 +5,46 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>
+    <IsPackable>true</IsPackable>
+    <SignAssembly>True</SignAssembly>
+    <Version></Version>
+    <Title>The extension for AspNetCore to organize JSON configuration.</Title>
+    <Authors>Andrzej Świstowski</Authors>
+    <Company>Voyager.com sp. z o.o.</Company>
+    <Description>
+      The nuget allows reading the JSON configuration files from a path. The path can be used by an environment like Linux, Docker, or Kubernetes to update the content by a mounting mechanism. In providing the library by docker images you will gain the possibility to avoid publishing your sensitive data in an image repository.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Voyager.com sp. z o.o.</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageIcon>voyager-nugets-ikona-128x128.png</PackageIcon>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyFile>sgVoy.snk</AssemblyOriginatorKeyFile>
+    <PackAsTool>False</PackAsTool>
+    <PackageTags>Kubernetes,Docker,Linux,JSON,Configuration</PackageTags>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <None Include="..\..\img\voyager-nugets-ikona-128x128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />

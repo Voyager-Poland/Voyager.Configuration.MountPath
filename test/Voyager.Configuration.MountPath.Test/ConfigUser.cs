@@ -12,7 +12,7 @@ namespace Voyager.Configuration.MountPath.Test
 			this.configuration = configuration;
 		}
 
-		public string GetTestSetting()
+		public virtual string GetTestSetting()
 		{
 			return configuration["TestSetting"]!;
 		}

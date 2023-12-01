@@ -11,9 +11,9 @@ namespace Voyager.Configuration.MountPath
 			this.hostEnvironment = hostEnvironment;
 		}
 
-		public override Settings GetSettings()
+		public override Settings GetSettings(string filename = "appsettings")
 		{
-			var settings = base.GetSettings();
+			var settings = base.GetSettings(filename);
 			settings.HostingName = hostEnvironment.EnvironmentName;
 			settings.CurrentDirectory = hostEnvironment.ContentRootPath;
 			return settings;
@@ -27,9 +27,9 @@ namespace Voyager.Configuration.MountPath
 		{
 		}
 
-		public override Settings GetSettings()
+		public override Settings GetSettings(string filename = "appsettings")
 		{
-			var settings = base.GetSettings();
+			var settings = base.GetSettings(filename);
 			settings.Optional = false;
 			return settings;
 		}

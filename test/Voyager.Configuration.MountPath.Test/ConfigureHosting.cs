@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal class ConfigureHosting
+	class ConfigureHosting
 	{
 		private IHost host;
 
@@ -11,15 +12,14 @@ namespace Voyager.Configuration.MountPath.Test
 		public void Setup()
 		{
 			var builder = Host.CreateDefaultBuilder(null);
-
 			PrepareConfiguration(builder);
-
-			builder.ConfigureServices(services =>
-			{
-				services.AddTransient<ConfigUser>();
-			});
+			builder.ConfigureServices(AddServicess);
 			this.host = builder.Build();
 		}
+
+		protected virtual void AddServicess(IServiceCollection services) => services.AddTransient<ConfigUser>();
+
+		protected IConfiguration GetConfiguration() => host.Services.GetService<IConfiguration>()!;
 
 		[TearDown]
 		public void TearDown()
@@ -31,74 +31,21 @@ namespace Voyager.Configuration.MountPath.Test
 		public void GetConfigValue()
 		{
 			ConfigUser configUser = host.Services.GetService<ConfigUser>()!;
-			CommonTest(configUser.GetTestSetting());
-			EnvTest(configUser.GetEnvironmentSetting());
+			Compare(configUser.GetTestSetting(), "For all");
+			Compare(configUser.GetEnvironmentSetting(), GetEnvValue());
 		}
 
 
-		protected virtual void PrepareConfiguration(IHostBuilder builder)
-		{
-			builder.ConfigureAppConfiguration((hostingConfiguration, config) =>
-			{
-				config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider());
-			});
-		}
+		void PrepareConfiguration(IHostBuilder builder) => builder.ConfigureAppConfiguration(AddConfig);
 
-		protected virtual void EnvTest(string output)
-		{
-			Compare(output, "int value");
-		}
+		protected virtual void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config) => config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider());
+		protected virtual string GetEnvValue() => "int value";
 
 
-		private void CommonTest(string output)
-		{
-			Compare(output, "For all");
-		}
-
-		protected void Compare(string output, string expected)
+		void Compare(string output, string expected)
 		{
 			Assert.That(output, Is.EqualTo(expected));
 		}
 
-	}
-
-
-	internal class SpecyficConfiguration : ConfigureHosting
-	{
-
-		protected override void PrepareConfiguration(IHostBuilder builder)
-		{
-			builder.ConfigureAppConfiguration((hostingConfiguration, config) =>
-			{
-				config.AddMountConfiguration(settings =>
-				{
-					settings.HostingName = "MyEnv";
-					settings.Optional = false;
-				});
-			});
-		}
-
-		protected override void EnvTest(string output)
-		{
-			Compare(output, "specific");
-		}
-	}
-
-
-	internal class ForceSpecyficConfiguration : ConfigureHosting
-	{
-		protected override void PrepareConfiguration(IHostBuilder builder)
-		{
-			builder.ConfigureAppConfiguration((hostingConfiguration, config) =>
-			{
-				hostingConfiguration.HostingEnvironment.EnvironmentName = "Development";
-				config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProviderForce());
-			});
-		}
-
-		protected override void EnvTest(string output)
-		{
-			Assert.That(output, Is.EqualTo("dev"));
-		}
 	}
 }

@@ -7,9 +7,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
 	public static class ConfigurationExtension
 	{
-		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, SettingsProvider provider)
+		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, SettingsProvider provider, string filename = "appsettings")
 		{
-			var setting = provider.GetSettings();
+			var setting = provider.GetSettings(filename);
 			return AddMountConfiguration(configurationBuilder, setting);
 		}
 

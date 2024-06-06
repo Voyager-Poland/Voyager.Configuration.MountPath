@@ -4,11 +4,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	class FileNameConfiguration : FileNameEmptyConfiguration
+	class GroupFileNameConfiguration : FileNameConfiguration
 	{
 		protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
 		{
-			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "srp");
+			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "srp", "another");
 		}
 
 		[Test]
@@ -20,7 +20,7 @@ namespace Voyager.Configuration.MountPath.Test
 		protected override void CheckFile(IConfiguration config)
 		{
 			base.CheckFile(config);
-			Assert.That(config["spr"], Is.EqualTo("yes"));
+			Assert.That(config["another"], Is.EqualTo("yes"));
 		}
 	}
 }

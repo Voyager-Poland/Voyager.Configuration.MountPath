@@ -23,10 +23,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="config\another.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="config\srp.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="config\appsettings.Development.json">
+    <None Update="config\appsettings.dev.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="config\appsettings.MyEnv.json">

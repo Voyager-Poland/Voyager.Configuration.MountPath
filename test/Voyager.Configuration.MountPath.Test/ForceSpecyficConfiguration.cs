@@ -8,7 +8,7 @@ namespace Voyager.Configuration.MountPath.Test
 	{
 		protected override void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
 		{
-			hostingConfiguration.HostingEnvironment.EnvironmentName = "Development";
+			hostingConfiguration.HostingEnvironment.EnvironmentName = "dev";
 			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProviderForce());
 		}
 		protected override string GetEnvValue() => "dev";

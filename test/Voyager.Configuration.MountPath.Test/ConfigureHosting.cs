@@ -38,7 +38,11 @@ namespace Voyager.Configuration.MountPath.Test
 
 		void PrepareConfiguration(IHostBuilder builder) => builder.ConfigureAppConfiguration(AddConfig);
 
-		protected virtual void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config) => config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider());
+		protected virtual void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
+		{
+			Console.WriteLine(hostingConfiguration.HostingEnvironment.EnvironmentName);
+			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider());
+		}
 		protected virtual string GetEnvValue() => "int value";
 
 

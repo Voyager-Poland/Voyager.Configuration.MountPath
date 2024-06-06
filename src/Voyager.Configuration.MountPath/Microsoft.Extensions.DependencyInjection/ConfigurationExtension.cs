@@ -13,6 +13,16 @@ namespace Microsoft.Extensions.DependencyInjection
 			return AddMountConfiguration(configurationBuilder, setting);
 		}
 
+		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, SettingsProvider provider, params string[] filenames)
+		{
+			foreach (var filename in filenames)
+			{
+				var setting = provider.GetSettings(filename);
+				AddMountConfiguration(configurationBuilder, setting);
+			}
+			return configurationBuilder;
+		}
+
 		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, Action<Settings> actDeleg)
 		{
 			var setting = SettingsProvider.PrepareDefault();

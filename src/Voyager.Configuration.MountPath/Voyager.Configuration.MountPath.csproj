@@ -20,7 +20,7 @@
     <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>
     <IsPackable>true</IsPackable>
     <SignAssembly>True</SignAssembly>
-    <Version>1.2.5</Version>
+    <Version>1.2.6</Version>
     <Title>The extension for AspNetCore to organize JSON configuration.</Title>
     <Authors>Andrzej Świstowski</Authors>
     <Company>Voyager.com sp. z o.o.</Company>

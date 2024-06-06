@@ -11,11 +11,14 @@ namespace Voyager.Configuration.MountPath
 			HostingName = "Development";
 			CurrentDirectory = Directory.GetCurrentDirectory();
 			Optional = true;
+
 		}
 		public string CurrentDirectory { get; set; }
 		public string FileName { get; set; }
 		public string ConfigMountPath { get; set; }
 		public string HostingName { get; set; }
 		public bool Optional { get; set; }
+
+		public string Key { get; set; }
 	}
 }

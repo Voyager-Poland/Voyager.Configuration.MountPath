@@ -4,23 +4,23 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	class GroupFileNameConfiguration : FileNameConfiguration
-	{
-		protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
-		{
-			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "srp", "another");
-		}
+  class GroupFileNameConfiguration : FileNameConfiguration
+  {
+    protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
+    {
+      config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "srp", "another");
+    }
 
-		[Test]
-		public override void TestNewConfig()
-		{
-			base.TestNewConfig();
-		}
+    [Test]
+    public override void TestNewConfig()
+    {
+      base.TestNewConfig();
+    }
 
-		protected override void CheckFile(IConfiguration config)
-		{
-			base.CheckFile(config);
-			Assert.That(config["another"], Is.EqualTo("yes"));
-		}
-	}
+    protected override void CheckFile(IConfiguration config)
+    {
+      base.CheckFile(config);
+      Assert.That(config["another"], Is.EqualTo("yes"));
+    }
+  }
 }

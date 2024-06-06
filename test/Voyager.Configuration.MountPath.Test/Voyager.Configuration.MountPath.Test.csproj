@@ -18,11 +18,25 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyFile>..\..\src\Voyager.Configuration.MountPath\sgVoy.snk</AssemblyOriginatorKeyFile>
+    <OutputType>Library</OutputType>
+    <SignAssembly>True</SignAssembly>
+  </PropertyGroup>
+
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Voyager.Configuration.MountPath\Voyager.Configuration.MountPath.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="config\connectionstring.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="config\encoded.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="config\another.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -38,6 +52,14 @@
     <None Update="config\appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
   </ItemGroup>
 
 </Project>

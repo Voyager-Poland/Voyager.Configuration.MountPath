@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>E:\Zrodla\gitHub\Voyager.Configuration.MountPath\src\Voyager.Configuration.MountPath\sgVoy.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\src\Voyager.Configuration.MountPath\sgVoy.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

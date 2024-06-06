@@ -50,6 +50,12 @@ namespace Microsoft.Extensions.DependencyInjection
 			return AddEncryptedJsonFile(builder, provider: null, path: path, key: key, optional: optional, reloadOnChange: reloadOnChange);
 		}
 
+		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder configurationBuilder, Action<Settings> actDeleg)
+		{
+			var setting = SettingsProvider.PrepareDefault();
+			actDeleg.Invoke(setting);
+			return AddEncryptedMountConfiguration(configurationBuilder, setting);
+		}
 
 		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, IFileProvider provider, string path, string key, bool optional, bool reloadOnChange)
 		{

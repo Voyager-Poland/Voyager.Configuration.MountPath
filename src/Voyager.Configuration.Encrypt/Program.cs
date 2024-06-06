@@ -15,5 +15,5 @@ if (string.IsNullOrEmpty(encodeKey))
 Voyager.Configuration.MountPath.Encryption.Encryptor encryptor = new Voyager.Configuration.MountPath.Encryption.Encryptor(encodeKey);
 
 Console.WriteLine($"To encrypt: {args[0]}");
-
+Console.WriteLine();
 Console.WriteLine(encryptor.Encrypt(args[0]));

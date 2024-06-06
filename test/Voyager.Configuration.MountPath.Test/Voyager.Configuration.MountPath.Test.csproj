@@ -20,7 +20,7 @@
 
   <PropertyGroup>
     <DelaySign>False</DelaySign>
-    <AssemblyOriginatorKeyFile>..\..\src\Voyager.Configuration.MountPath\sgVoy.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>sgVoy.snk</AssemblyOriginatorKeyFile>
     <OutputType>Library</OutputType>
     <SignAssembly>True</SignAssembly>
   </PropertyGroup>

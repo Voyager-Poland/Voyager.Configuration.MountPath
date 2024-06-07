@@ -18,4 +18,4 @@ Voyager.Configuration.MountPath.Encryption.Encryptor encryptor = new Voyager.Con
 
 Console.WriteLine($"To encrypt: {args[0]}");
 Console.WriteLine();
-Console.WriteLine(encryptor.Encrypt(args[0]));
+Console.WriteLine(encryptor.Decrypt(args[0]));

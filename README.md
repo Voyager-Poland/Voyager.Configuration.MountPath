@@ -49,7 +49,7 @@ builder.ConfigureAppConfiguration((hostingConfiguration, config) =>
 });
 ```
  
- The second possibility is to override the class Voyager.Configuration.MountPath.SettingsProvider and use the instance in the AddMountConfiguration method.
+The second possibility is to override the class Voyager.Configuration.MountPath.SettingsProvider and use the instance in the AddMountConfiguration method.
 
 Also is possible to use the AddMountConfiguration with the action that is can change all settings.
 

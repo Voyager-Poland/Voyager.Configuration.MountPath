@@ -26,20 +26,22 @@ namespace Voyager.Configuration.MountPath.Encryption
 		public Byte[] Encrypt(string dataParam)
 		{
 			var transform = cryptoProvider.CreateEncryptor(keyBytes, ivBytes);
-			using var ms = new MemoryStream();
-			using var crypstream = new CryptoStream(ms, transform, CryptoStreamMode.Write);
-			using var sw = new StreamWriter(crypstream);
-			sw.Write(dataParam);
-			sw.Close();
-			crypstream.Close();
-			return ms.ToArray();
+			using (var ms = new MemoryStream())
+			using (var crypstream = new CryptoStream(ms, transform, CryptoStreamMode.Write))
+			using (var sw = new StreamWriter(crypstream))
+			{
+				sw.Write(dataParam);
+				sw.Close();
+				crypstream.Close();
+				return ms.ToArray();
+			}
 		}
 
 		public string Decrypt(byte[] dataParam)
 		{
-			using DESCryptoServiceProvider cryptoProvider = new DESCryptoServiceProvider();
 			var result = string.Empty;
-			using var ms = new MemoryStream(dataParam);
+			using (DESCryptoServiceProvider cryptoProvider = new DESCryptoServiceProvider())
+			using (var ms = new MemoryStream(dataParam))
 			using (var crypstream = new CryptoStream(ms, cryptoProvider.CreateDecryptor(keyBytes, ivBytes), CryptoStreamMode.Read))
 			{
 				using (var sr = new StreamReader(crypstream))
@@ -48,9 +50,10 @@ namespace Voyager.Configuration.MountPath.Encryption
 					sr.Close();
 				}
 				crypstream.Close();
+
+				ms.Close();
+				return result;
 			}
-			ms.Close();
-			return result;
 		}
 	}
 }

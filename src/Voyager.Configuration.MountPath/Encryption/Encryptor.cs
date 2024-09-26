@@ -15,14 +15,16 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 		public string Encrypt(string dataParam)
 		{
-			using CoreEncoder coreEncoder = new CoreEncoder(keyBytes, ivBytes);
-			return Convert.ToBase64String(coreEncoder.Encrypt(dataParam));
+			using (CoreEncoder coreEncoder = new CoreEncoder(keyBytes, ivBytes))
+			{
+				return Convert.ToBase64String(coreEncoder.Encrypt(dataParam));
+			}
 		}
 
 		public string Decrypt(string dataParamtxt)
 		{
-			using CoreEncoder coreEncoder = new CoreEncoder(keyBytes, ivBytes);
-			return coreEncoder.Decrypt(Convert.FromBase64String(dataParamtxt));
+			using (CoreEncoder coreEncoder = new CoreEncoder(keyBytes, ivBytes))
+				return coreEncoder.Decrypt(Convert.FromBase64String(dataParamtxt));
 		}
 	}
 }

@@ -1,13 +1,19 @@
 ﻿// See https://aka.ms/new-console-template for more information
+var encodeKey = string.Empty;
 if (args.Length == 0)
 {
 	Console.Write("Param is requeried");
 	return;
 }
-const string ENVName = "ASPNETCORE_ENCODEKEY";
-
-
-var encodeKey = Environment.GetEnvironmentVariable(ENVName);
+else if (args.Length == 1)
+{
+	const string ENVName = "ASPNETCORE_ENCODEKEY";
+	encodeKey = Environment.GetEnvironmentVariable(ENVName);
+}
+else
+{
+	encodeKey = args[1];
+}
 if (string.IsNullOrEmpty(encodeKey))
 {
 	Console.Write("Lack of enviromentVariable ENVName");

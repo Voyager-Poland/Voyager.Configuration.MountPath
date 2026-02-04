@@ -2,10 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-
     <IsPackable>false</IsPackable>
-
     <OutputType>Library</OutputType>
+    <!-- Disable nullable - C# 7.3 on net48 doesn't support it -->
+    <Nullable>disable</Nullable>
+    <!-- Suppress NU1701 for .NET Framework-only packages -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

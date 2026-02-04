@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Override global multi-targeting - single framework for Owin tests -->
     <TargetFramework>net48</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
     <IsPackable>false</IsPackable>
     <OutputType>Library</OutputType>
     <!-- Disable nullable - C# 7.3 on net48 doesn't support it -->

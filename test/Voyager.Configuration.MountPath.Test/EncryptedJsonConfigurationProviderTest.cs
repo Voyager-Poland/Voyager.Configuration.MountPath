@@ -2,7 +2,8 @@
 
 namespace Voyager.Configuration.MountPath.Test
 {
-  class EncryptedJsonConfigurationProviderTest
+  [TestFixture]
+  public class EncryptedJsonConfigurationProviderTest
   {
     private EncryptedJsonConfigurationProvider provider;
 

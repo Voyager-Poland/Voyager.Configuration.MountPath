@@ -2,7 +2,8 @@
 
 namespace Voyager.Configuration.MountPath.Test
 {
-  class EncryptorTest
+  [TestFixture]
+  public class EncryptorTest
   {
     private Encryptor encryptor;
 

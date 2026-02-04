@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Voyager.Configuration.MountPath.Owin
 {
-
+	[TestFixture]
 	public class OwinTest
 	{
 		private TestServer _server;

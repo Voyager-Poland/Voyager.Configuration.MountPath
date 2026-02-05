@@ -1,55 +1,24 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal class ConfigureHosting
+	/// <summary>
+	/// Tests default mount configuration loading.
+	/// </summary>
+	[TestFixture]
+	internal class ConfigureHosting : ConfigurationTestBase
 	{
-		private IHost host;
-
-		[SetUp]
-		public void Setup()
+		protected override void ConfigureHost(HostBuilderContext context, IConfigurationBuilder config)
 		{
-			var builder = Host.CreateDefaultBuilder(null);
-			PrepareConfiguration(builder);
-			builder.ConfigureServices(AddServicess);
-			this.host = builder.Build();
-		}
-
-		protected virtual void AddServicess(IServiceCollection services) => services.AddTransient<ConfigUser>();
-
-		protected IConfiguration GetConfiguration() => host.Services.GetService<IConfiguration>()!;
-
-		[TearDown]
-		public void TearDown()
-		{
-			host?.Dispose();
+			config.AddMountConfiguration(context.HostingEnvironment.GetSettingsProvider());
 		}
 
 		[Test]
-		public void GetConfigValue()
+		public void GetConfigValue_WithDefaultConfiguration_ReturnsExpectedValues()
 		{
-			ConfigUser configUser = host.Services.GetService<ConfigUser>()!;
-			Compare(configUser.GetTestSetting(), "For all");
-			Compare(configUser.GetEnvironmentSetting(), GetEnvValue());
+			Assert.That(ConfigUser.GetTestSetting(), Is.EqualTo("For all"));
+			Assert.That(ConfigUser.GetEnvironmentSetting(), Is.EqualTo("int value"));
 		}
-
-
-		private void PrepareConfiguration(IHostBuilder builder) => builder.ConfigureAppConfiguration(AddConfig);
-
-		protected virtual void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
-		{
-			Console.WriteLine(hostingConfiguration.HostingEnvironment.EnvironmentName);
-			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider());
-		}
-		protected virtual string GetEnvValue() => "int value";
-
-
-		private void Compare(string output, string expected)
-		{
-			Assert.That(output, Is.EqualTo(expected));
-		}
-
 	}
 }

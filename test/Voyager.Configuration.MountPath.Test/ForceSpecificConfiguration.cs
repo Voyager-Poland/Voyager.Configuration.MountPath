@@ -1,17 +1,25 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal class ForceSpecificConfiguration : ConfigureHosting
+	/// <summary>
+	/// Tests forced configuration with explicitly set environment name.
+	/// </summary>
+	[TestFixture]
+	internal class ForceSpecificConfiguration : ConfigurationTestBase
 	{
-		protected override void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
+		protected override void ConfigureHost(HostBuilderContext context, IConfigurationBuilder config)
 		{
-			hostingConfiguration.HostingEnvironment.EnvironmentName = "dev";
-			config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProviderForce());
+			context.HostingEnvironment.EnvironmentName = "dev";
+			config.AddMountConfiguration(context.HostingEnvironment.GetSettingsProviderForce());
 		}
-		protected override string GetEnvValue() => "dev";
 
+		[Test]
+		public void GetConfigValue_WithForcedEnvironment_ReturnsDevValue()
+		{
+			Assert.That(ConfigUser.GetTestSetting(), Is.EqualTo("For all"));
+			Assert.That(ConfigUser.GetEnvironmentSetting(), Is.EqualTo("dev"));
+		}
 	}
 }

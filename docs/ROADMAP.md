@@ -390,10 +390,10 @@ public interface ICipherProvider
 
 ### 3.2 Włączenie Nullable Reference Types
 
-**Plik:** `Directory.Build.props`
+**Plik:** `Voyager.Configuration.MountPath.csproj`
 
 **Zadania:**
-- [x] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
+- [ ] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
 - [ ] Dodać adnotacje `?` gdzie nullable jest zamierzone
 - [ ] Dodać null checks gdzie potrzebne
 - [ ] Naprawić ostrzeżenia kompilatora
@@ -401,9 +401,9 @@ public interface ICipherProvider
 ### 3.3 Usunięcie zbędnego kodu
 
 **Zadania:**
-- [ ] Usunąć zbędne `Close()` w `CoreEncoder.cs` (using już zamyka)
+- [x] Usunąć zbędne `Close()` w `CoreEncoder.cs` (using już zamyka) - renamed to LegacyDesCipherProvider with proper using statements
 - [ ] Usunąć nieużywane referencje do editorconfig w projektach testowych
-- [ ] Uprościć hierarchię dziedziczenia w testach
+- [x] Uprościć hierarchię dziedziczenia w testach (5 levels → 1 level with ConfigurationTestBase)
 
 ### 3.4 Spójność przestrzeni nazw
 

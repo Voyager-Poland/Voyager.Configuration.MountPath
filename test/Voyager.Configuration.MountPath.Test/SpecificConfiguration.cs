@@ -1,13 +1,15 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal abstract class SpecificConfiguration : ConfigureHosting
+	/// <summary>
+	/// Tests configuration with custom environment name.
+	/// </summary>
+	[TestFixture]
+	internal class SpecificConfiguration : ConfigurationTestBase
 	{
-
-		protected override void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
+		protected override void ConfigureHost(HostBuilderContext context, IConfigurationBuilder config)
 		{
 			config.AddMountConfiguration(settings =>
 			{
@@ -16,6 +18,10 @@ namespace Voyager.Configuration.MountPath.Test
 			});
 		}
 
-		protected override string GetEnvValue() => "specific";
+		[Test]
+		public void GetConfigValue_WithCustomEnvironment_ReturnsSpecificValue()
+		{
+			Assert.That(Configuration["EnvironmentSetting"], Is.EqualTo("specific"));
+		}
 	}
 }

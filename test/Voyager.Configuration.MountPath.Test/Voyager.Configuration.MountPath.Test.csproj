@@ -55,12 +55,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <EditorConfigFiles Remove="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
-  </ItemGroup>
-
 </Project>

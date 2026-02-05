@@ -402,7 +402,7 @@ public interface ICipherProvider
 
 **Zadania:**
 - [x] Usunąć zbędne `Close()` w `CoreEncoder.cs` (using już zamyka) - renamed to LegacyDesCipherProvider with proper using statements
-- [ ] Usunąć nieużywane referencje do editorconfig w projektach testowych
+- [x] Usunąć nieużywane referencje do editorconfig w projektach testowych
 - [x] Uprościć hierarchię dziedziczenia w testach (5 levels → 1 level with ConfigurationTestBase)
 
 ### 3.4 Spójność przestrzeni nazw

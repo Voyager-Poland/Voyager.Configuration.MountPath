@@ -84,11 +84,120 @@ dotnet Voyager.Configuration.Migrate upgrade ./config/*.json --old-key "stary" -
 ### 1.3 Implementacja funkcji wyprowadzania klucza (KDF)
 
 **Problem:** Bezpośrednie użycie stringa jako klucza (`Encryptor.cs:12-13`)
+- Obecny kod: `key.Substring(0, 8)` → tylko 8 bajtów dla DES
+- Stare klucze mogą mieć 16-26 znaków (nie 32)
+
+**Rozwiązanie: PBKDF2 do rozciągnięcia dowolnego klucza**
+
+```csharp
+public class KeyDerivation
+{
+    private const int Iterations = 100_000;
+    private static readonly byte[] Salt = Encoding.UTF8.GetBytes("Voyager.Config.Salt.V2");
+
+    public static (byte[] Key, byte[] BaseIV) DeriveKey(string password)
+    {
+        // Dowolny klucz (nawet 8 znaków) → 32 bajty dla AES-256
+        using var pbkdf2 = new Rfc2898DeriveBytes(
+            password,
+            Salt,
+            Iterations,
+            HashAlgorithmName.SHA256);
+
+        byte[] key = pbkdf2.GetBytes(32);    // AES-256 key
+        byte[] baseIv = pbkdf2.GetBytes(12); // Base IV for counter mode
+        return (key, baseIv);
+    }
+}
+```
+
+**Kompatybilność ze starymi kluczami:**
+- Klucz "PowaznyTestks123456722228" (26 znaków) → PBKDF2 → 32 bajty ✓
+- Klucz "ShortKey123" (11 znaków) → PBKDF2 → 32 bajty ✓
+- Użytkownicy NIE muszą zmieniać swoich kluczy!
 
 **Zadania:**
-- [ ] Zaimplementować PBKDF2 lub Argon2 do wyprowadzania klucza
-- [ ] Generować losowy IV dla każdej operacji szyfrowania
-- [ ] Przechowywać IV razem z zaszyfrowanymi danymi
+- [ ] Zaimplementować PBKDF2 z SHA-256
+- [ ] Stały salt w kodzie (lub konfigurowalny)
+- [ ] 100,000+ iteracji dla bezpieczeństwa
+- [ ] Generować losowy IV dla każdej wartości
+- [ ] Przechowywać IV w zaszyfrowanej wartości
+
+### 1.4 Format zaszyfrowanych wartości (IV w wartości)
+
+**Problem:** Gdzie zapisać IV skoro każda wartość JSON jest osobno szyfrowana?
+
+**Obecny format:**
+```json
+{
+  "ConnectionString": "base64(DES_ciphertext)",
+  "ApiKey": "base64(DES_ciphertext)"
+}
+```
+
+**Nowy format (IV embedded in value):**
+```json
+{
+  "ConnectionString": "AES:base64(random_IV[12] + ciphertext + auth_tag[16])",
+  "ApiKey": "AES:base64(random_IV[12] + ciphertext + auth_tag[16])"
+}
+```
+
+**Struktura zaszyfrowanej wartości:**
+```
+┌─────────┬────────────────────┬──────────────┐
+│ IV (12B)│ Ciphertext (N bytes)│ Auth Tag (16B)│
+└─────────┴────────────────────┴──────────────┘
+         ↓ Base64 encode ↓
+"AES:SGVsbG8gV29ybGQhIQ=="
+```
+
+**Implementacja:**
+```csharp
+public string Encrypt(string plaintext)
+{
+    byte[] iv = RandomNumberGenerator.GetBytes(12);  // Losowy IV dla każdej wartości!
+    byte[] plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
+    byte[] ciphertext = new byte[plaintextBytes.Length];
+    byte[] tag = new byte[16];
+
+    using var aes = new AesGcm(_derivedKey, 16);
+    aes.Encrypt(iv, plaintextBytes, ciphertext, tag);
+
+    // IV + ciphertext + tag → Base64
+    byte[] result = new byte[iv.Length + ciphertext.Length + tag.Length];
+    iv.CopyTo(result, 0);
+    ciphertext.CopyTo(result, iv.Length);
+    tag.CopyTo(result, iv.Length + ciphertext.Length);
+
+    return "AES:" + Convert.ToBase64String(result);
+}
+
+public string Decrypt(string encrypted)
+{
+    if (encrypted.StartsWith("AES:"))
+    {
+        byte[] data = Convert.FromBase64String(encrypted[4..]);
+        byte[] iv = data[..12];
+        byte[] ciphertext = data[12..^16];
+        byte[] tag = data[^16..];
+
+        byte[] plaintext = new byte[ciphertext.Length];
+        using var aes = new AesGcm(_derivedKey, 16);
+        aes.Decrypt(iv, ciphertext, tag, plaintext);
+
+        return Encoding.UTF8.GetString(plaintext);
+    }
+
+    // Legacy DES fallback
+    return DecryptLegacyDes(encrypted);
+}
+```
+
+**Dlaczego losowy IV dla każdej wartości?**
+- Ten sam plaintext + ten sam klucz = inny ciphertext (bezpieczne)
+- Unikamy ataków "same plaintext detection"
+- IV nie musi być tajny, tylko unikalny
 
 ### 1.4 Dodanie uwierzytelniania szyfrowania
 

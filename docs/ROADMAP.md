@@ -334,26 +334,26 @@ public interface ICipherProvider
 ```
 
 **Zadania:**
-- [ ] Utworzyć `IEncryptor` w `Encryption/IEncryptor.cs`
-- [ ] Utworzyć `ISettingsProvider` w `ISettingsProvider.cs`
-- [ ] Utworzyć `ICipherProvider` w `Encryption/ICipherProvider.cs`
-- [ ] Zrefaktorować istniejące klasy do implementacji interfejsów
+- [x] Utworzyć `IEncryptor` w `Encryption/IEncryptor.cs`
+- [x] Utworzyć `ISettingsProvider` w `ISettingsProvider.cs`
+- [x] Utworzyć `ICipherProvider` w `Encryption/ICipherProvider.cs`
+- [x] Zrefaktorować istniejące klasy do implementacji interfejsów
 
 ### 2.2 Dependency Injection
 
 **Problem:** `EncryptedJsonConfigurationProvider` bezpośrednio tworzy `Encryptor`
 
 **Zadania:**
-- [ ] Wstrzykiwać `IEncryptor` przez konstruktor
-- [ ] Dodać rejestrację w DI container
-- [ ] Umożliwić podmianę implementacji
+- [x] Wstrzykiwać `IEncryptor` przez konstruktor (via IEncryptorFactory)
+- [x] Dodać rejestrację w DI container (ServiceCollectionExtensions)
+- [x] Umożliwić podmianę implementacji
 
 ### 2.3 Implementacja IDisposable
 
 **Problem:** `EncryptedJsonConfigurationProvider` nie zwalnia zasobów
 
 **Zadania:**
-- [ ] Zaimplementować `IDisposable` w `EncryptedJsonConfigurationProvider`
+- [x] Zaimplementować `IDisposable` w `EncryptedJsonConfigurationProvider`
 - [ ] Zaimplementować `IDisposable` w `Encryptor` (jeśli używa zasobów)
 - [ ] Dodać using/dispose w kodzie klienckim
 
@@ -363,7 +363,7 @@ public interface ICipherProvider
 
 **Zadania:**
 - [ ] Dodać walidację w setterach (ścieżki plików, niepuste stringi)
-- [ ] Wydzielić stałe do klasy `SettingsDefaults`
+- [x] Wydzielić stałe do klasy `SettingsDefaults`
 - [ ] Rozważyć Builder Pattern dla konstrukcji
 - [ ] Dodać `init` settery dla niemutowalności po konstrukcji
 
@@ -383,16 +383,17 @@ public interface ICipherProvider
 | `CoreEncoder` | `LegacyDesCipherProvider` |
 
 **Zadania:**
-- [ ] Poprawić nazwy klas testowych
-- [ ] Poprawić nazwy metod testowych wg konwencji `[Method]_[Condition]_[Result]`
-- [ ] Poprawić nazwy parametrów
+- [x] Poprawić nazwy klas testowych (ForceSpecyficConfiguration → ForceSpecificConfiguration, EncodedConnectioString → EncodedConnectionString)
+- [x] Poprawić nazwy metod testowych wg konwencji `[Method]_[Condition]_[Result]`
+- [x] Poprawić nazwy parametrów
+- [x] Zmienić nazwę CoreEncoder → LegacyDesCipherProvider
 
 ### 3.2 Włączenie Nullable Reference Types
 
-**Plik:** `Voyager.Configuration.MountPath.csproj`
+**Plik:** `Directory.Build.props`
 
 **Zadania:**
-- [ ] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
+- [x] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
 - [ ] Dodać adnotacje `?` gdzie nullable jest zamierzone
 - [ ] Dodać null checks gdzie potrzebne
 - [ ] Naprawić ostrzeżenia kompilatora

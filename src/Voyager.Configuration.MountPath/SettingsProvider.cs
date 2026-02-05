@@ -1,20 +1,26 @@
-﻿namespace Voyager.Configuration.MountPath
+namespace Voyager.Configuration.MountPath
 {
-	public class SettingsProvider
+	/// <summary>
+	/// Provides configuration settings for mount path configuration.
+	/// </summary>
+	public class SettingsProvider : ISettingsProvider
 	{
-		public virtual Settings GetSettings(string filename = "appsettings")
+		/// <inheritdoc />
+		public virtual Settings GetSettings(string filename = SettingsDefaults.DefaultFileName)
 		{
-			return new Settings()
+			return new Settings
 			{
-				FileName = filename,
+				FileName = filename ?? SettingsDefaults.DefaultFileName,
 			};
 		}
 
+		/// <summary>
+		/// Creates default settings.
+		/// </summary>
 		internal static Settings PrepareDefault()
 		{
-
-			var prov = new SettingsProvider();
-			return prov.GetSettings();
+			var provider = new SettingsProvider();
+			return provider.GetSettings();
 		}
 	}
 }

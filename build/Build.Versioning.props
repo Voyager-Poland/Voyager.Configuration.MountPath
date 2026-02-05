@@ -10,13 +10,6 @@
 
     <!-- Preview builds for non-release branches/commits -->
     <MinVerDefaultPreReleaseIdentifiers Condition="'$(GITHUB_REF_TYPE)' != 'tag'">preview</MinVerDefaultPreReleaseIdentifiers>
-
-    <!-- Assembly versioning strategy -->
-    <!-- AssemblyVersion: Major.0.0.0 (only major changes break binary compatibility) -->
-    <AssemblyVersion>$(MinVerMajor).0.0.0</AssemblyVersion>
-
-    <!-- FileVersion: Major.Minor.Patch.0 (full semantic version) -->
-    <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</FileVersion>
   </PropertyGroup>
 
   <!-- MinVer Package Reference -->
@@ -26,4 +19,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <!-- Assembly version strategy: set after MinVer computes the version -->
+  <Target Name="SetAssemblyVersion" AfterTargets="MinVer">
+    <PropertyGroup>
+      <!-- AssemblyVersion: Major.0.0.0 (only major changes break binary compatibility) -->
+      <AssemblyVersion>$(MinVerMajor).0.0.0</AssemblyVersion>
+      <!-- FileVersion: Major.Minor.Patch.0 (full semantic version) -->
+      <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</FileVersion>
+    </PropertyGroup>
+  </Target>
 </Project>

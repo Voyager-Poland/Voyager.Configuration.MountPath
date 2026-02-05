@@ -23,6 +23,54 @@ Ten dokument opisuje plan ulepszeń biblioteki Voyager.Configuration.MountPath, 
 - [ ] Dodać opcję konfiguracji wyboru algorytmu
 - [ ] Utworzyć narzędzie do migracji zaszyfrowanych danych
 
+#### Strategia kompatybilności wstecznej
+
+**UWAGA:** Stare pliki zaszyfrowane DES NIE będą działać z nowym AES bez migracji!
+
+**Opcja A: Auto-detection (zalecana)**
+```csharp
+public class HybridEncryptor : IEncryptor
+{
+    // Nowe dane: prefix "AES:" + base64(IV + ciphertext + tag)
+    // Stare dane: brak prefixu, próba DES fallback
+
+    public string Decrypt(string ciphertext)
+    {
+        if (ciphertext.StartsWith("AES:"))
+            return DecryptAes(ciphertext[4..]);
+
+        // Fallback dla legacy DES (z ostrzeżeniem w logach)
+        _logger.LogWarning("Using deprecated DES decryption. Please migrate.");
+        return DecryptLegacyDes(ciphertext);
+    }
+}
+```
+
+**Opcja B: Explicit configuration**
+```csharp
+builder.AddEncryptedJsonFile("config.json", key, new EncryptionOptions
+{
+    Algorithm = EncryptionAlgorithm.Aes256Gcm,  // lub .LegacyDes
+    AllowLegacyFallback = true  // próbuj DES jeśli AES fails
+});
+```
+
+**Narzędzie migracji (CLI):**
+```bash
+# Konwersja pliku z DES na AES
+dotnet Voyager.Configuration.Migrate upgrade config.json --old-key "stary" --new-key "nowy"
+
+# Batch migration
+dotnet Voyager.Configuration.Migrate upgrade ./config/*.json --old-key "stary" --new-key "nowy"
+```
+
+**Plan migracji dla użytkowników:**
+1. Upgrade do v2.0 z `AllowLegacyFallback = true`
+2. Uruchom narzędzie migracji na wszystkich plikach
+3. Przetestuj aplikację
+4. Wyłącz `AllowLegacyFallback` w v2.1+
+5. W v3.0 usuń wsparcie DES całkowicie
+
 ### 1.2 Usunięcie domyślnego klucza szyfrowania
 
 **Problem:** Hardcoded klucz `"DEFAULT123456789011"` w `EncryptedJsonConfigurationSource.cs:10`

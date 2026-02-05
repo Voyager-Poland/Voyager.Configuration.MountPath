@@ -36,10 +36,9 @@ jobs:
     - name: Build
       run: dotnet build --no-restore -c Release
 
-    - name: Test (matrix target only)
-      env:
-        TARGET_FRAMEWORK: ${{ matrix.dotnet-version == '6.0.x' && 'net6.0' || 'net8.0' }}
-      run: dotnet test test/Voyager.Configuration.MountPath.Test/Voyager.Configuration.MountPath.Test.csproj --no-build --verbosity normal -c Release -f $TARGET_FRAMEWORK
+    - name: Test (only on dotnet 8 - test project targets net8.0 only)
+      if: matrix.dotnet-version == '8.0.x'
+      run: dotnet test test/Voyager.Configuration.MountPath.Test/Voyager.Configuration.MountPath.Test.csproj --no-build --verbosity normal -c Release -f net8.0
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v5

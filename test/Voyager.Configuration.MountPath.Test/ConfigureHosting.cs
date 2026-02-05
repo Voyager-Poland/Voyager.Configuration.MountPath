@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	class ConfigureHosting
+	internal class ConfigureHosting
 	{
 		private IHost host;
 
@@ -36,7 +36,7 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 
-		void PrepareConfiguration(IHostBuilder builder) => builder.ConfigureAppConfiguration(AddConfig);
+		private void PrepareConfiguration(IHostBuilder builder) => builder.ConfigureAppConfiguration(AddConfig);
 
 		protected virtual void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
 		{
@@ -46,7 +46,7 @@ namespace Voyager.Configuration.MountPath.Test
 		protected virtual string GetEnvValue() => "int value";
 
 
-		void Compare(string output, string expected)
+		private void Compare(string output, string expected)
 		{
 			Assert.That(output, Is.EqualTo(expected));
 		}

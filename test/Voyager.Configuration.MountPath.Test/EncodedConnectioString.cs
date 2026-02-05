@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-  class EncodedConnectioString : FileNameConfiguration
+  internal class EncodedConnectioString : FileNameConfiguration
   {
     protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
     {

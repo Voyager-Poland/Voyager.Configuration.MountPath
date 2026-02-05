@@ -19,14 +19,14 @@ namespace Voyager.Configuration.MountPath.Test
     }
 
     [Test]
-    public void DecoreEncode()
+    public void EncryptAndDecrypt_WithValidText_ReturnsOriginalText()
     {
-      var tekxt = "tekst to encode może jednak ma być dłuższy";
-      var result = encryptor.Encrypt(tekxt);
-      Console.WriteLine(result);
-      Assert.That(result, Is.Not.EqualTo(tekxt));
-      var afterall = encryptor.Decrypt(result);
-      Assert.That(afterall, Is.EqualTo(tekxt));
+      var plainText = "tekst to encode może jednak ma być dłuższy";
+      var encrypted = encryptor.Encrypt(plainText);
+      Console.WriteLine(encrypted);
+      Assert.That(encrypted, Is.Not.EqualTo(plainText));
+      var decrypted = encryptor.Decrypt(encrypted);
+      Assert.That(decrypted, Is.EqualTo(plainText));
     }
   }
 }

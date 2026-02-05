@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-	internal class ForceSpecyficConfiguration : ConfigureHosting
+	internal class ForceSpecificConfiguration : ConfigureHosting
 	{
 		protected override void AddConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
 		{

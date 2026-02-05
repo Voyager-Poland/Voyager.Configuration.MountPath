@@ -4,13 +4,13 @@ using System.Security.Cryptography;
 
 namespace Voyager.Configuration.MountPath.Encryption
 {
-	internal class CoreEncoder : IDisposable
+	internal class LegacyDesCipherProvider : IDisposable
 	{
 		private readonly byte[] keyBytes;
 		private readonly byte[] ivBytes;
 		private readonly DESCryptoServiceProvider cryptoProvider;
 
-		public CoreEncoder(byte[] keyBytes, byte[] ivBytes)
+		public LegacyDesCipherProvider(byte[] keyBytes, byte[] ivBytes)
 		{
 			this.keyBytes = keyBytes;
 			this.ivBytes = ivBytes;

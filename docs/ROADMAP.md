@@ -55,14 +55,112 @@ builder.AddEncryptedJsonFile("config.json", key, new EncryptionOptions
 });
 ```
 
-**Narzędzie migracji (CLI):**
-```bash
-# Konwersja pliku z DES na AES
-dotnet Voyager.Configuration.Migrate upgrade config.json --old-key "stary" --new-key "nowy"
+**Narzędzie CLI: Voyager.Configuration.Tool**
 
-# Batch migration
-dotnet Voyager.Configuration.Migrate upgrade ./config/*.json --old-key "stary" --new-key "nowy"
+Nowe narzędzie CLI do szyfrowania, deszyfrowania i migracji plików konfiguracyjnych.
+
+```bash
+# Instalacja jako global tool
+dotnet tool install -g Voyager.Configuration.Tool
+
+# Lub uruchomienie z projektu
+dotnet run --project src/Voyager.Configuration.Tool
 ```
+
+**Komendy:**
+
+```bash
+# === SZYFROWANIE PLIKU ===
+# Szyfruje wszystkie wartości w pliku JSON
+voyager-config encrypt appsettings.json --key "MojKluczSzyfrowania" --output appsettings.encrypted.json
+
+# Szyfrowanie w miejscu (nadpisuje plik)
+voyager-config encrypt appsettings.json --key "MojKluczSzyfrowania" --in-place
+
+# Szyfrowanie z nowym algorytmem AES
+voyager-config encrypt appsettings.json --key "MojKlucz" --algorithm aes
+
+# === DESZYFROWANIE PLIKU ===
+# Deszyfruje wszystkie wartości w pliku JSON
+voyager-config decrypt appsettings.encrypted.json --key "MojKluczSzyfrowania" --output appsettings.json
+
+# Deszyfrowanie w miejscu
+voyager-config decrypt appsettings.encrypted.json --key "MojKluczSzyfrowania" --in-place
+
+# === MIGRACJA DES → AES ===
+# Konwersja pliku z DES na AES (ten sam klucz)
+voyager-config migrate appsettings.json --key "MojKlucz"
+
+# Konwersja z zmianą klucza
+voyager-config migrate appsettings.json --old-key "StaryKlucz" --new-key "NowyKlucz"
+
+# Batch migration (wiele plików)
+voyager-config migrate ./config/*.json --key "MojKlucz"
+
+# === WERYFIKACJA ===
+# Sprawdza czy plik jest poprawnie zaszyfrowany
+voyager-config verify appsettings.encrypted.json --key "MojKlucz"
+
+# === INFORMACJE ===
+# Pokazuje algorytm użyty w pliku (DES/AES)
+voyager-config info appsettings.encrypted.json
+```
+
+**Opcje wspólne:**
+```
+--key, -k         Klucz szyfrowania (wymagany)
+--output, -o      Plik wyjściowy (domyślnie: stdout lub nowy plik)
+--in-place, -i    Nadpisz plik wejściowy
+--algorithm, -a   Algorytm: aes (domyślny), des (legacy)
+--verbose, -v     Szczegółowe logowanie
+--dry-run         Pokaż co zostanie zrobione bez wykonania
+```
+
+**Przykładowy workflow:**
+```bash
+# 1. Masz plik z danymi niezaszyfrowanymi
+cat appsettings.json
+# { "ConnectionString": "Server=localhost;Password=secret" }
+
+# 2. Zaszyfrujesz go
+voyager-config encrypt appsettings.json -k "MojSuperTajnyKlucz123" -o appsettings.encrypted.json
+
+# 3. Wynik
+cat appsettings.encrypted.json
+# { "ConnectionString": "AES:SGVsbG8gV29ybGQh..." }
+
+# 4. Aplikacja używa zaszyfrowanego pliku
+# builder.AddEncryptedJsonFile("appsettings.encrypted.json", "MojSuperTajnyKlucz123")
+
+# 5. W razie potrzeby możesz odszyfrować
+voyager-config decrypt appsettings.encrypted.json -k "MojSuperTajnyKlucz123"
+# { "ConnectionString": "Server=localhost;Password=secret" }
+```
+
+**Struktura projektu:**
+```
+src/
+  Voyager.Configuration.Tool/
+    Program.cs
+    Commands/
+      EncryptCommand.cs
+      DecryptCommand.cs
+      MigrateCommand.cs
+      VerifyCommand.cs
+      InfoCommand.cs
+    Voyager.Configuration.Tool.csproj
+```
+
+**Zadania:**
+- [ ] Utworzyć projekt `Voyager.Configuration.Tool` jako .NET global tool
+- [ ] Zaimplementować `EncryptCommand` - szyfrowanie pliku
+- [ ] Zaimplementować `DecryptCommand` - deszyfrowanie pliku
+- [ ] Zaimplementować `MigrateCommand` - migracja DES → AES
+- [ ] Zaimplementować `VerifyCommand` - weryfikacja poprawności
+- [ ] Zaimplementować `InfoCommand` - informacje o pliku
+- [ ] Obsługa batch processing (wildcards)
+- [ ] Obsługa stdin/stdout dla pipeline'ów
+- [ ] Publikacja jako `dotnet tool` na NuGet
 
 **Plan migracji dla użytkowników:**
 1. Upgrade do v2.0 z `AllowLegacyFallback = true`

@@ -39,7 +39,7 @@ jobs:
     - name: Test (matrix target only)
       env:
         TARGET_FRAMEWORK: ${{ matrix.dotnet-version == '6.0.x' && 'net6.0' || 'net8.0' }}
-      run: dotnet test --no-build --verbosity normal -c Release -f $TARGET_FRAMEWORK
+      run: dotnet test test/Voyager.Configuration.MountPath.Test/Voyager.Configuration.MountPath.Test.csproj --no-build --verbosity normal -c Release -f $TARGET_FRAMEWORK
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v5
@@ -88,7 +88,7 @@ jobs:
       run: dotnet build --no-restore -c Release -f net48
 
     - name: Test net48 (Owin tests)
-      run: dotnet test --no-build -c Release -f net48
+      run: dotnet test test/Voyager.Configuration.MountPath.Owin/Voyager.Configuration.MountPath.Owin.csproj --no-build -c Release -f net48
 
   deploy:
     runs-on: ubuntu-latest

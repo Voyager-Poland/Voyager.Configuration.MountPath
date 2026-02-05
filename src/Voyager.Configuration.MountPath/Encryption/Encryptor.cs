@@ -5,8 +5,8 @@ namespace Voyager.Configuration.MountPath.Encryption
 {
 	public class Encryptor
 	{
-		readonly byte[] keyBytes;
-		readonly byte[] ivBytes;
+		private readonly byte[] keyBytes;
+		private readonly byte[] ivBytes;
 		public Encryptor(string key)
 		{
 			keyBytes = Encoding.ASCII.GetBytes(key.Substring(0, 8));

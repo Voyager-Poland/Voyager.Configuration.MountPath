@@ -5,7 +5,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 {
 	public class EncryptedJsonConfigurationProvider : JsonConfigurationProvider
 	{
-		Encryptor encryptor;
+		private readonly Encryptor encryptor;
 
 		public EncryptedJsonConfigurationProvider(EncryptedJsonConfigurationSource source) : base(source)
 		{

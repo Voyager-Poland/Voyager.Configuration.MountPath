@@ -4,11 +4,11 @@ using System.Security.Cryptography;
 
 namespace Voyager.Configuration.MountPath.Encryption
 {
-	class CoreEncoder : IDisposable
+	internal class CoreEncoder : IDisposable
 	{
-		private byte[] keyBytes;
-		private byte[] ivBytes;
-		private DESCryptoServiceProvider cryptoProvider;
+		private readonly byte[] keyBytes;
+		private readonly byte[] ivBytes;
+		private readonly DESCryptoServiceProvider cryptoProvider;
 
 		public CoreEncoder(byte[] keyBytes, byte[] ivBytes)
 		{

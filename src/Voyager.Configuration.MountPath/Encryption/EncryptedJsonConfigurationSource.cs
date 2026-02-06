@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
+using System;
 
 namespace Voyager.Configuration.MountPath.Encryption
 {
@@ -8,10 +9,22 @@ namespace Voyager.Configuration.MountPath.Encryption
 	/// </summary>
 	public class EncryptedJsonConfigurationSource : JsonConfigurationSource
 	{
+		private string _key = string.Empty;
+
 		/// <summary>
 		/// Gets or sets the encryption key.
 		/// </summary>
-		public string Key { get; set; } = string.Empty;
+		/// <exception cref="ArgumentException">Thrown when key is null or whitespace.</exception>
+		public string Key
+		{
+			get => _key;
+			set
+			{
+				if (string.IsNullOrWhiteSpace(value))
+					throw new ArgumentException("Encryption key cannot be null or whitespace.", nameof(Key));
+				_key = value;
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the encryptor factory for creating encryptor instances.

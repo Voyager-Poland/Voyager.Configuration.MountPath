@@ -362,9 +362,9 @@ public interface ICipherProvider
 **Problem:** Brak walidacji, mutowalne właściwości, magic strings
 
 **Zadania:**
-- [ ] Dodać walidację w setterach (ścieżki plików, niepuste stringi)
+- [x] Dodać walidację w setterach (ścieżki plików, niepuste stringi)
 - [x] Wydzielić stałe do klasy `SettingsDefaults`
-- [ ] Rozważyć Builder Pattern dla konstrukcji
+- [ ] Rozważyć Builder Pattern dla konstrukcji (opcjonalne)
 - [ ] Dodać `init` settery dla niemutowalności po konstrukcji
 
 ---

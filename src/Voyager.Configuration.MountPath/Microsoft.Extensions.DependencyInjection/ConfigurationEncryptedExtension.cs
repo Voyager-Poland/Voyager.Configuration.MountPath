@@ -1,82 +1,65 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using System;
-using System.IO;
 using Voyager.Configuration.MountPath;
 using Voyager.Configuration.MountPath.Encryption;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+	/// <summary>
+	/// Extension methods for adding encrypted configuration.
+	/// This class is obsolete and will be removed in a future version.
+	/// </summary>
+	/// <remarks>
+	/// This class has been split into two separate classes following the Single Responsibility Principle:
+	/// <list type="bullet">
+	/// <item><description>Use <see cref="EncryptedMountConfigurationExtensions"/> for AddEncryptedMountConfiguration methods.</description></item>
+	/// <item><description>Use <see cref="EncryptedJsonFileExtensions"/> for AddEncryptedJsonFile methods.</description></item>
+	/// </list>
+	/// </remarks>
+	[Obsolete("This class has been split into EncryptedMountConfigurationExtensions and EncryptedJsonFileExtensions. It will be removed in version 3.0.")]
 	public static class ConfigurationEncryptedExtension
 	{
 
 		public static IConfigurationBuilder AddEncryptedMountConfiguration(this IConfigurationBuilder configurationBuilder, Settings settings)
 		{
-			configurationBuilder.SetBasePath(Path.Combine(settings.CurrentDirectory, settings.ConfigMountPath))
-											.AddEncryptedJsonFile($"{settings.FileName}.json", settings.Key, optional: false, reloadOnChange: true)
-											.AddEncryptedJsonFile($"{settings.FileName}.{settings.HostingName}.json", settings.Key, optional: settings.Optional, reloadOnChange: true);
-			return configurationBuilder;
+			return EncryptedMountConfigurationExtensions.AddEncryptedMountConfiguration(configurationBuilder, settings);
 		}
 
 
 		public static IConfigurationBuilder AddEncryptedMountConfiguration(this IConfigurationBuilder configurationBuilder, string key, SettingsProvider provider, string filename)
 		{
-			var setting = provider.GetSettings(filename);
-			setting.Key = key;
-			return AddEncryptedMountConfiguration(configurationBuilder, setting);
+			return EncryptedMountConfigurationExtensions.AddEncryptedMountConfiguration(configurationBuilder, key, provider, filename);
 		}
 
 
 		public static IConfigurationBuilder AddEncryptedMountConfiguration(this IConfigurationBuilder configurationBuilder, string key, SettingsProvider provider, params string[] filenames)
 		{
-			foreach (var filename in filenames)
-			{
-				var setting = provider.GetSettings(filename);
-				setting.Key = key;
-				AddEncryptedMountConfiguration(configurationBuilder, setting);
-			}
-			return configurationBuilder;
+			return EncryptedMountConfigurationExtensions.AddEncryptedMountConfiguration(configurationBuilder, key, provider, filenames);
 		}
 
 
 
 
 		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, Action<EncryptedJsonConfigurationSource> configureSource)
-		=> builder.Add(configureSource);
+		{
+			return EncryptedJsonFileExtensions.AddEncryptedJsonFile(builder, configureSource);
+		}
 
 
 		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, string path, string key, bool optional, bool reloadOnChange)
 		{
-			return AddEncryptedJsonFile(builder, provider: null, path: path, key: key, optional: optional, reloadOnChange: reloadOnChange);
+			return EncryptedJsonFileExtensions.AddEncryptedJsonFile(builder, path, key, optional, reloadOnChange);
 		}
 
-		public static IConfigurationBuilder AddEncryptedMountConfiguration(this IConfigurationBuilder configurationBuilder, Action<Settings> actDeleg)
+		public static IConfigurationBuilder AddEncryptedMountConfiguration(this IConfigurationBuilder configurationBuilder, Action<Settings> configureSettings)
 		{
-			var setting = SettingsProvider.PrepareDefault();
-			actDeleg.Invoke(setting);
-			return AddEncryptedMountConfiguration(configurationBuilder, setting);
+			return EncryptedMountConfigurationExtensions.AddEncryptedMountConfiguration(configurationBuilder, configureSettings);
 		}
 
 		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, IFileProvider provider, string path, string key, bool optional, bool reloadOnChange)
 		{
-			if (builder == null)
-			{
-				throw new ArgumentNullException(nameof(builder));
-			}
-			if (string.IsNullOrEmpty(path))
-			{
-				throw new ArgumentException("Wrong path");
-			}
-
-			return builder.AddEncryptedJsonFile(s =>
-			{
-				s.FileProvider = provider;
-				s.Path = path;
-				s.Optional = optional;
-				s.ReloadOnChange = reloadOnChange;
-				s.Key = key;
-				s.ResolveFileProvider();
-			});
+			return EncryptedJsonFileExtensions.AddEncryptedJsonFile(builder, provider, path, key, optional, reloadOnChange);
 		}
 
 

@@ -539,13 +539,13 @@ Plik `ConfigurationEncryptedExtension.cs` ma dwie odpowiedzialności:
 **Problem 2: Niespójna kolejność parametrów**
 
 **Zadania:**
-- [ ] Podzielić według SRP na osobne pliki:
+- [x] Podzielić według SRP na osobne pliki:
   - `ConfigurationExtension.cs` (już OK - tylko AddMountConfiguration)
   - `EncryptedMountConfigurationExtensions.cs` (AddEncryptedMountConfiguration)
   - `EncryptedJsonFileExtensions.cs` (AddEncryptedJsonFile)
-- [ ] Ujednolicić kolejność parametrów: `builder, path, key, optional, reloadOnChange`
-- [ ] Dodać overloady z sensownymi defaults
-- [ ] Deprecate niespójne metody przed usunięciem w przyszłej wersji
+- [x] Ujednolicić kolejność parametrów: `builder, path, key, optional, reloadOnChange`
+- [x] Dodać overloady z sensownymi defaults
+- [x] Deprecate niespójne metody przed usunięciem w przyszłej wersji (marked ConfigurationEncryptedExtension as [Obsolete])
 
 ### 7.2 Builder Pattern dla Settings
 

@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted
+Implemented
 
 **Date**: 2026-02-06
+**Implementation Date**: 2026-02-06
 
 ## Context
 
@@ -47,12 +48,12 @@ All configuration extension methods are placed in `Microsoft.Extensions.Dependen
    - Methods: `AddMountConfiguration` overloads
    - Responsibility: Loading plain JSON files from configurable mount paths
 
-2. **EncryptedMountConfigurationExtensions.cs** (to be created)
+2. **EncryptedMountConfigurationExtensions.cs**
    - Purpose: Encrypted configuration from mount paths
    - Methods: `AddEncryptedMountConfiguration` overloads
    - Responsibility: Loading and decrypting JSON files from mount paths
 
-3. **EncryptedJsonFileExtensions.cs** (to be created)
+3. **EncryptedJsonFileExtensions.cs**
    - Purpose: Low-level encrypted JSON file operations
    - Methods: `AddEncryptedJsonFile` overloads
    - Responsibility: Adding individual encrypted JSON files with full control
@@ -98,11 +99,11 @@ None for current version. Future refactoring (splitting `ConfigurationEncryptedE
 ## Implementation Plan
 
 1. ✅ Phase 1: Create `ServiceCollectionExtensions.cs` with DI registration
-2. 🔄 Phase 2: Split `ConfigurationEncryptedExtension.cs`:
-   - Create `EncryptedMountConfigurationExtensions.cs`
-   - Create `EncryptedJsonFileExtensions.cs`
-   - Mark old class as `[Obsolete]`
-3. 📋 Phase 3: Update documentation and examples
+2. ✅ Phase 2: Split `ConfigurationEncryptedExtension.cs`:
+   - ✅ Create `EncryptedMountConfigurationExtensions.cs`
+   - ✅ Create `EncryptedJsonFileExtensions.cs`
+   - ✅ Mark old class as `[Obsolete]`
+3. ✅ Phase 3: Update documentation (ROADMAP.md, ADR-001)
 
 ## References
 

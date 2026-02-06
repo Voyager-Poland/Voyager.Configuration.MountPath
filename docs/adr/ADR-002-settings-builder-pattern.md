@@ -155,7 +155,7 @@ public class Settings
 
 **Rejected**: Too rigid, makes Action<Settings> pattern impossible, harder to extend.
 
-### 2. Record Type (C# 9+)
+### 2. Record Type with Init Properties (C# 9+)
 
 ```csharp
 public record Settings
@@ -165,10 +165,15 @@ public record Settings
 }
 ```
 
-**Rejected**:
-- Breaks existing API (no setters)
-- Multi-targeting includes .NET Framework 4.8 (C# 7.3, no records)
-- `init` properties don't support validation
+**Partially Adopted**: Settings is now a record type (with IsExternalInit polyfill for net48/netcoreapp3.1), but uses regular setters instead of `init` properties.
+
+Reasoning:
+- **Record adopted**: Provides value-based equality and `with` expressions
+- **Init rejected**: Code modifies properties after construction (e.g., `setting.Key = key`), which `init` blocks
+- **Validation works**: Setters allow validation while maintaining flexibility
+- **Best of both**: Value semantics from record + mutability from setters
+
+This hybrid approach combines record benefits (equality, with expressions) with setter flexibility (post-construction modification, validation).
 
 ### 3. Hybrid Approach (Builder + Action)
 

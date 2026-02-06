@@ -364,8 +364,8 @@ public interface ICipherProvider
 **Zadania:**
 - [x] Dodać walidację w setterach (ścieżki plików, niepuste stringi)
 - [x] Wydzielić stałe do klasy `SettingsDefaults`
-- [ ] Rozważyć Builder Pattern dla konstrukcji (opcjonalne)
-- [ ] Dodać `init` settery dla niemutowalności po konstrukcji
+- [x] Rozważyć Builder Pattern dla konstrukcji (ADR-002: Rejected - Action<Settings> is better)
+- [ ] Dodać `init` settery dla niemutowalności po konstrukcji (zablokowane: wymaga C# 9+, nie działa z net48)
 
 ---
 

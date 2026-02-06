@@ -454,9 +454,9 @@ public interface ICipherProvider
 ### 5.1 XML Documentation
 
 **Zadania:**
-- [ ] Dodać `///` komentarze do wszystkich publicznych typów i metod
-- [ ] Usunąć `<NoWarn>1591</NoWarn>` z Build.CodeQuality.props
-- [ ] Generować dokumentację API
+- [x] Dodać `///` komentarze do wszystkich publicznych typów i metod
+- [x] Usunąć `<NoWarn>1591</NoWarn>` z Build.CodeQuality.props
+- [ ] Generować dokumentację API (opcjonalne - DocFX, Sandcastle)
 
 ### 5.2 Rozbudowa README
 

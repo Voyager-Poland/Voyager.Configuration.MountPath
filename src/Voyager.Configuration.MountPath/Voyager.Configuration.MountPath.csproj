@@ -29,14 +29,15 @@
   <PropertyGroup>
     <PackageProjectUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>
-    <Title>The extension for AspNetCore to organize JSON configuration.</Title>
+    <Title>Organize JSON configuration by file name with conditional environment loading</Title>
     <Authors>Andrzej Swistowski</Authors>
     <Description>
-      The nuget allows reading the JSON configuration files from a path. The path can be used by an environment like Linux, Docker, or Kubernetes to update the content by a mounting mechanism. In providing the library by docker images you will gain the possibility to avoid publishing your sensitive data in an image repository.</Description>
+      Organize ASP.NET Core configuration into separate JSON files by concern (database, logging, services, etc.) and load them conditionally based on environment variables. Pass file names (without extensions) as parameters, and the library automatically loads base files plus environment-specific overrides (e.g., database.json + database.Production.json). Designed for containerized environments (Docker, Kubernetes) with mount paths. Optional encryption support for sensitive values. Follows SOLID principles with separate extension classes by responsibility.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>voyager-nugets-ikona-128x128.png</PackageIcon>
     <PackAsTool>False</PackAsTool>
-    <PackageTags>Kubernetes,Docker,Linux,JSON,Configuration</PackageTags>
+    <PackageTags>Kubernetes,Docker,Linux,JSON,Configuration,Environment,Conditional,SOLID,SRP,ASP.NET-Core</PackageTags>
+    <PackageReleaseNotes>v1.3.0: SRP refactoring - Extension methods split by responsibility (EncryptedMountConfigurationExtensions, EncryptedJsonFileExtensions). ConfigurationEncryptedExtension marked as obsolete. See ADR-001 for details.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

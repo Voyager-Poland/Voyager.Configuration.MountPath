@@ -461,8 +461,13 @@ public interface ICipherProvider
 ### 5.2 Rozbudowa README
 
 **Sekcje do dodania:**
-- [ ] Security Considerations
-- [ ] Migration Guide (z DES do AES)
+- [x] Security Considerations - added encryption best practices and key management
+- [x] Quick Start - added basic configuration examples
+- [x] Encryption documentation - added encrypted configuration examples
+- [x] DI examples - added dependency injection registration examples
+- [x] Docker/Kubernetes examples - added container deployment examples
+- [x] Fix spelling and grammar errors (metod→method, worsk→works, thest→test, etc.)
+- [ ] Migration Guide (z DES do AES) - to be added in future version
 - [ ] API Reference
 - [ ] Troubleshooting
 - [ ] Performance Tips

@@ -11,13 +11,13 @@ namespace Voyager.Configuration.MountPath.Encryption
 		/// <summary>
 		/// Gets or sets the encryption key.
 		/// </summary>
-		public string Key { get; set; }
+		public string Key { get; set; } = string.Empty;
 
 		/// <summary>
 		/// Gets or sets the encryptor factory for creating encryptor instances.
 		/// If not set, the default factory is used.
 		/// </summary>
-		public IEncryptorFactory EncryptorFactory { get; set; }
+		public IEncryptorFactory? EncryptorFactory { get; set; }
 
 		/// <inheritdoc />
 		public override IConfigurationProvider Build(IConfigurationBuilder builder)

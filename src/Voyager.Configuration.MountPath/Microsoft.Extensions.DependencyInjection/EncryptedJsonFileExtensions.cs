@@ -58,7 +58,7 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// Adds an encrypted JSON configuration file to the builder with a custom file provider.
 		/// </summary>
 		/// <param name="builder">The configuration builder.</param>
-		/// <param name="provider">The file provider to use to access the configuration file.</param>
+		/// <param name="provider">The file provider to use to access the configuration file. If null, the default provider is used.</param>
 		/// <param name="path">The path to the JSON file.</param>
 		/// <param name="key">The encryption key.</param>
 		/// <param name="optional">Whether the file is optional.</param>
@@ -66,7 +66,7 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// <returns>The configuration builder for method chaining.</returns>
 		/// <exception cref="ArgumentNullException">Thrown when builder is null.</exception>
 		/// <exception cref="ArgumentException">Thrown when path is null or empty.</exception>
-		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, IFileProvider provider, string path, string key, bool optional, bool reloadOnChange)
+		public static IConfigurationBuilder AddEncryptedJsonFile(this IConfigurationBuilder builder, IFileProvider? provider, string path, string key, bool optional, bool reloadOnChange)
 		{
 			if (builder == null)
 				throw new ArgumentNullException(nameof(builder));

@@ -35,7 +35,11 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 			foreach (string key in Data.Keys)
 			{
-				Data[key] = encryptor.Decrypt(Data[key]);
+				var value = Data[key];
+				if (value != null)
+				{
+					Data[key] = encryptor.Decrypt(value);
+				}
 			}
 		}
 

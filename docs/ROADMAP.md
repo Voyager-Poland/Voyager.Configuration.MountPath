@@ -393,10 +393,10 @@ public interface ICipherProvider
 **Plik:** `Voyager.Configuration.MountPath.csproj`
 
 **Zadania:**
-- [ ] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
-- [ ] Dodać adnotacje `?` gdzie nullable jest zamierzone
-- [ ] Dodać null checks gdzie potrzebne
-- [ ] Naprawić ostrzeżenia kompilatora
+- [x] Zmienić `<Nullable>disable</Nullable>` na `<Nullable>enable</Nullable>`
+- [x] Dodać adnotacje `?` gdzie nullable jest zamierzone
+- [x] Dodać null checks gdzie potrzebne
+- [x] Naprawić ostrzeżenia kompilatora (0 ostrzeżeń, 0 błędów)
 
 ### 3.3 Usunięcie zbędnego kodu
 

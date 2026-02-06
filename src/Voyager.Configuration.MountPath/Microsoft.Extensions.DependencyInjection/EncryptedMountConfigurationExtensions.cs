@@ -28,6 +28,8 @@ namespace Microsoft.Extensions.DependencyInjection
 				throw new ArgumentNullException(nameof(configurationBuilder));
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
+			if (settings.Key == null)
+				throw new ArgumentNullException(nameof(settings.Key), "Encryption key must be provided in settings.");
 
 			configurationBuilder.SetBasePath(Path.Combine(settings.CurrentDirectory, settings.ConfigMountPath));
 			EncryptedJsonFileExtensions.AddEncryptedJsonFile(configurationBuilder, $"{settings.FileName}.json", settings.Key, optional: false, reloadOnChange: true);

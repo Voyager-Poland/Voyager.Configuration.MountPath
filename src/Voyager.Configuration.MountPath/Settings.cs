@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace Voyager.Configuration.MountPath
 {
@@ -46,7 +46,8 @@ namespace Voyager.Configuration.MountPath
 
 		/// <summary>
 		/// Gets or sets the encryption key for encrypted configuration values.
+		/// Null if encryption is not used.
 		/// </summary>
-		public string Key { get; set; }
+		public string? Key { get; set; }
 	}
 }

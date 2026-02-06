@@ -19,8 +19,8 @@
     <SignAssembly>True</SignAssembly>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyFile>sgVoy.snk</AssemblyOriginatorKeyFile>
-    <!-- Disable nullable until code is refactored -->
-    <Nullable>disable</Nullable>
+    <!-- Enable nullable reference types -->
+    <Nullable>enable</Nullable>
     <!-- Suppress obsolete crypto warning (DESCryptoServiceProvider) -->
     <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
   </PropertyGroup>

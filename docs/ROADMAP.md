@@ -528,14 +528,23 @@ public interface ICipherProvider
 
 ## Faza 7: API Usability (NISKIE)
 
-### 7.1 Spójność parametrów w extension methods
+### 7.1 Refaktoryzacja extension methods (SRP + API Consistency)
 
-**Problem:** Niespójna kolejność parametrów w `ConfigurationEncryptedExtension.cs`
+**Problem 1: Naruszenie Single Responsibility Principle**
+Plik `ConfigurationEncryptedExtension.cs` ma dwie odpowiedzialności:
+- `AddEncryptedMountConfiguration` - wysokopoziomowe API (montowanie + szyfrowanie)
+- `AddEncryptedJsonFile` - niskopoziomowe API (pliki JSON + szyfrowanie)
+
+**Problem 2: Niespójna kolejność parametrów**
 
 **Zadania:**
-- [ ] Ujednolicić kolejność: `builder, path, key, optional, reloadOnChange`
+- [ ] Podzielić według SRP na osobne pliki:
+  - `ConfigurationExtension.cs` (już OK - tylko AddMountConfiguration)
+  - `EncryptedMountConfigurationExtensions.cs` (AddEncryptedMountConfiguration)
+  - `EncryptedJsonFileExtensions.cs` (AddEncryptedJsonFile)
+- [ ] Ujednolicić kolejność parametrów: `builder, path, key, optional, reloadOnChange`
 - [ ] Dodać overloady z sensownymi defaults
-- [ ] Deprecate niespójne metody
+- [ ] Deprecate niespójne metody przed usunięciem w przyszłej wersji
 
 ### 7.2 Builder Pattern dla Settings
 

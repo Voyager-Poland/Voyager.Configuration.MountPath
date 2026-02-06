@@ -61,4 +61,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.*" />
   </ItemGroup>
 
+  <!-- Enable C# 9+ features (records, init) in older frameworks -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="IsExternalInit" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
 </Project>

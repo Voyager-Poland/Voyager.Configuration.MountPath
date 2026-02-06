@@ -6,7 +6,7 @@ namespace Voyager.Configuration.MountPath
 	/// <summary>
 	/// Configuration settings for mount path-based configuration loading.
 	/// </summary>
-	public class Settings
+	public record Settings
 	{
 		private string _currentDirectory;
 		private string _fileName;

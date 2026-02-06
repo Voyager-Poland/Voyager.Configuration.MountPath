@@ -475,10 +475,11 @@ public interface ICipherProvider
 ### 5.3 Architecture Decision Records (ADRs)
 
 **Zadania:**
-- [ ] Utworzyć folder `docs/adr/`
-- [ ] ADR-001: Wybór algorytmu szyfrowania
-- [ ] ADR-002: Struktura konfiguracji
-- [ ] ADR-003: Strategia wersjonowania
+- [x] Utworzyć folder `docs/adr/`
+- [x] ADR-001: Organization of Configuration Extension Methods (SRP, namespace conventions)
+- [ ] ADR-002: Wybór algorytmu szyfrowania (DES → AES-256-GCM)
+- [ ] ADR-003: Struktura konfiguracji (mount paths, file naming)
+- [ ] ADR-004: Strategia wersjonowania (SemVer, breaking changes)
 
 ### 5.4 Przykłady użycia
 

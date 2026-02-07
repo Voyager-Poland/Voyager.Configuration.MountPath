@@ -185,6 +185,7 @@ vconfig decrypt-value "encrypted_text"
 - ✅ ADR-003: Encryption Delegation to External Tools
 - ✅ ADR-004: CLI Tool for Configuration Encryption
 - ✅ ADR-005: Async Configuration Loading (Rejected)
+- ✅ ADR-006: Custom Exception Types and Error Handling (Accepted)
 
 ### 4.3 Refaktoryzacja Extension Methods (SRP)
 
@@ -236,12 +237,27 @@ vconfig decrypt-value "encrypted_text"
 
 ## Faza 6: Funkcjonalność - Ogólna (NISKI PRIORYTET)
 
-### 6.1 Lepsza obsługa błędów
+### 6.1 ✅ Lepsza obsługa błędów
 
-**Zadania:**
-- [ ] Utworzyć własne typy wyjątków (`ConfigurationException`)
-- [ ] Dodać walidację we wszystkich publicznych metodach
-- [ ] Lepsze komunikaty błędów z kontekstem
+**Status:** ✅ Zakończone (ADR)
+
+**Decyzja:** ADR-006 zaakceptował implementację custom exceptions z ograniczonym zakresem.
+
+**Implementacja (zaakceptowana przez ADR-006):**
+- [ ] Utworzyć 2 typy wyjątków:
+  - `ConfigurationException` - dla błędów ładowania konfiguracji
+  - `EncryptionException` - dla błędów szyfrowania/deszyfrowania
+- [ ] Opakowywać framework exceptions z kontekstem (MountPath, FileName)
+- [ ] Walidacja w setterach klasy `Settings`
+- [ ] Null checks w extension methods (`ArgumentNullException.ThrowIfNull`)
+- [ ] Lepsze komunikaty błędów zawierające: filename, mount path, kontekst operacji
+
+**Czego NIE robimy:**
+- ❌ Nadmierna walidacja w każdej metodzie (over-engineering)
+- ❌ Złożona hierarchia wyjątków (max 2 typy)
+- ❌ Custom exceptions dla błędów programistycznych (użyj ArgumentException)
+
+**Zobacz:** [ADR-006: Custom Exception Types and Error Handling](adr/ADR-006-custom-exception-types-and-error-handling.md)
 
 ### 6.2 ❌ Wsparcie dla async (ODRZUCONE)
 

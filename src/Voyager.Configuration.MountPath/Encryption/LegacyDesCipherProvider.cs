@@ -22,8 +22,8 @@ namespace Voyager.Configuration.MountPath.Encryption
 		/// <param name="ivBytes">The 8-byte initialization vector.</param>
 		public LegacyDesCipherProvider(byte[] keyBytes, byte[] ivBytes)
 		{
-			this._keyBytes = keyBytes ?? throw new ArgumentNullException(nameof(keyBytes));
-			this._ivBytes = ivBytes ?? throw new ArgumentNullException(nameof(ivBytes));
+			_keyBytes = keyBytes ?? throw new ArgumentNullException(nameof(keyBytes));
+			_ivBytes = ivBytes ?? throw new ArgumentNullException(nameof(ivBytes));
 
 			_cryptoProvider = new DESCryptoServiceProvider();
 		}

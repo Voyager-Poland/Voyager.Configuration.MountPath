@@ -13,7 +13,11 @@ This library provides a simple way to organize JSON configuration files by **fil
 - **Load files conditionally**: Automatically loads environment-specific variants (e.g., `database.json` + `database.Production.json`)
 - **Mount at runtime**: Keep configuration outside container images using volume mounts
 - **Update without rebuilding**: Change configuration without rebuilding or redeploying
-- **Optional encryption**: Encrypt sensitive values when needed (extension feature)
+
+> **⚠️ DEPRECATION NOTICE: Built-in Encryption**
+> The built-in encryption feature is **deprecated** and will be removed in **version 3.0**.
+> We recommend migrating to external secret management tools like **[Mozilla SOPS](https://github.com/mozilla/sops)**, Kubernetes Secrets, or cloud providers (Azure Key Vault, AWS Secrets Manager).
+> See [ADR-003: Encryption Delegation](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for migration guidance and rationale.
 
 ## Features
 
@@ -21,7 +25,6 @@ This library provides a simple way to organize JSON configuration files by **fil
 - 🎯 **Conditional loading**: Automatic environment-based file selection
 - 🐳 **Container-friendly**: Mount configuration from external volumes
 - 🔄 **Hot reload**: Automatically reload when configuration files change
-- 🔒 **Optional encryption**: Encrypt sensitive values (extension feature)
 - 🔌 **Dependency Injection**: Full DI support with interfaces
 - 🏗️ **SOLID architecture**: Interface-based design for testability
 - 📦 **Multi-targeting**: Supports .NET 4.8, .NET Core 3.1, .NET 6.0, and .NET 8.0
@@ -274,9 +277,12 @@ public class MySettingsProvider : ISettingsProvider
 builder.Services.AddVoyagerConfiguration<MySettingsProvider>();
 ```
 
-### Optional: Encrypted Configuration Files
+### ⚠️ DEPRECATED: Encrypted Configuration Files
 
-**Extension feature** for encrypting sensitive configuration values:
+> **This feature is deprecated and will be removed in version 3.0.**
+> Please migrate to external secret management tools.
+
+**Built-in encryption (deprecated):**
 
 ```csharp
 builder.ConfigureAppConfiguration((context, config) =>
@@ -288,43 +294,92 @@ builder.ConfigureAppConfiguration((context, config) =>
     config.AddMountConfiguration(provider, "logging");
     config.AddMountConfiguration(provider, "appsettings");
 
-    // Encrypted files (extension feature)
+    // ⚠️ DEPRECATED - Use SOPS instead
     config.AddEncryptedMountConfiguration(encryptionKey, provider, "secrets");
     config.AddEncryptedMountConfiguration(encryptionKey, provider, "connectionstrings");
 });
 ```
 
-**Register encryption services:**
-```csharp
-builder.Services.AddVoyagerEncryption();
+**Recommended alternative: Mozilla SOPS**
+
+Encrypt configuration files using [SOPS](https://github.com/mozilla/sops) before loading:
+
+```bash
+# Encrypt files with SOPS (one-time setup)
+sops -e config/secrets.json > config/secrets.json
+
+# Decrypt in your deployment script or init container
+sops -d /config-encrypted/secrets.json > /config/secrets.json
 ```
 
-**Low-level API** for individual encrypted files:
 ```csharp
-// Fine-grained control over encrypted files
-config.AddEncryptedJsonFile("secrets.json", encryptionKey, optional: false, reloadOnChange: true);
-config.AddEncryptedJsonFile("secrets.Production.json", encryptionKey, optional: true, reloadOnChange: true);
+// Load decrypted files normally - no code changes needed!
+builder.ConfigureAppConfiguration((context, config) =>
+{
+    var provider = context.HostingEnvironment.GetSettingsProvider();
+
+    config.AddMountConfiguration(provider, "logging");
+    config.AddMountConfiguration(provider, "secrets");     // Already decrypted by SOPS
+    config.AddMountConfiguration(provider, "appsettings");
+});
 ```
 
-> **Note**: Encryption is an optional extension feature. The core library is about organizing and conditionally loading configuration files.
+**Why migrate to SOPS?**
+- ✅ **More secure**: AES-256-GCM instead of legacy DES
+- ✅ **GitOps-friendly**: Encrypted files can be committed to Git
+- ✅ **Key management**: Integrates with AWS KMS, Azure Key Vault, GCP KMS, Age
+- ✅ **No code changes**: Decrypt before loading, library code stays the same
+- ✅ **Better tooling**: Edit encrypted files without manual decrypt/encrypt cycle
+
+See [ADR-003: Encryption Delegation to External Tools](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for:
+- Detailed SOPS setup guide
+- Migration examples for Kubernetes and Supervisor
+- Comparison of secret management solutions
+- Step-by-step migration path
 
 ## Security Considerations
 
-### Encryption
+### ⚠️ Encryption Feature Deprecated
 
-- **Current**: Uses legacy DES encryption (deprecated, for backward compatibility only)
-- **Recommended**: Migrate to AES-256-GCM in future versions
-- **Key Management**: Never hardcode encryption keys in source code
-  - Use environment variables
-  - Use secret management systems (Azure Key Vault, AWS Secrets Manager, etc.)
-  - Use Kubernetes secrets
+**Built-in encryption is deprecated** and will be removed in version 3.0.
+
+- **Current implementation**: Legacy DES encryption (56-bit, insecure)
+- **Status**: Deprecated for backward compatibility only
+- **Recommendation**: Migrate to external secret management tools
+
+### Recommended Secret Management Solutions
+
+Instead of built-in encryption, use industry-standard tools:
+
+1. **[Mozilla SOPS](https://github.com/mozilla/sops)** - File encryption for GitOps workflows
+   - Encrypts JSON/YAML values while keeping structure readable
+   - Supports AWS KMS, Azure Key Vault, GCP KMS, Age
+   - Git-friendly diffs
+   - **Best for**: GitOps, encrypted configs in Git
+
+2. **Kubernetes Secrets + Sealed Secrets**
+   - Native Kubernetes secret management
+   - Sealed Secrets for GitOps-safe encrypted secrets
+   - **Best for**: Kubernetes deployments
+
+3. **Cloud Secret Managers**
+   - Azure Key Vault, AWS Secrets Manager, GCP Secret Manager
+   - Enterprise-grade key rotation and audit logging
+   - **Best for**: Cloud-native applications
+
+4. **dotnet user-secrets**
+   - For development environments only
+   - **Best for**: Local development
+
+See [ADR-003](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for detailed migration guide.
 
 ### Best Practices
 
-1. **Minimum Key Length**: Use keys with at least 8 characters (longer for production)
-2. **Secret Storage**: Store encryption keys securely outside the application
-3. **File Permissions**: Ensure configuration files have appropriate read permissions
-4. **Container Security**: Mount configuration volumes as read-only (`:ro`)
+1. **External Secret Management**: Use SOPS, Kubernetes Secrets, or cloud providers
+2. **File Permissions**: Ensure configuration files have appropriate read permissions
+3. **Container Security**: Mount configuration volumes as read-only (`:ro`)
+4. **Key Management**: Never hardcode secrets in source code or images
+5. **Separation of Concerns**: Configuration loading ≠ secret management
 
 ## Architecture
 
@@ -352,6 +407,8 @@ All extension methods are placed in the `Microsoft.Extensions.DependencyInjectio
 
 - **[Architecture Decision Records](docs/adr/)** - Architectural decisions and their rationale
   - [ADR-001: Extension Methods Organization](docs/adr/ADR-001-extension-methods-organization.md) - How extension methods are organized
+  - [ADR-002: Settings Builder Pattern](docs/adr/ADR-002-settings-builder-pattern.md) - Why Action<Settings> over Builder Pattern
+  - [ADR-003: Encryption Delegation to External Tools](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) - **Migration guide from built-in encryption to SOPS**
 - **[ROADMAP](docs/ROADMAP.md)** - Planned improvements and feature roadmap
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
 

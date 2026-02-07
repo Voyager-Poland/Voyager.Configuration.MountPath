@@ -22,6 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// <param name="provider">The settings provider.</param>
 		/// <param name="filename">The configuration file name without extension (default: "appsettings").</param>
 		/// <returns>The configuration builder for method chaining.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="configurationBuilder"/>, <paramref name="provider"/>, or <paramref name="filename"/> is null.</exception>
 		/// <remarks>
 		/// Loads two files:
 		/// <list type="bullet">
@@ -31,6 +32,10 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// </remarks>
 		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, SettingsProvider provider, string filename = "appsettings")
 		{
+			if (configurationBuilder == null) throw new ArgumentNullException(nameof(configurationBuilder));
+			if (provider == null) throw new ArgumentNullException(nameof(provider));
+			if (filename == null) throw new ArgumentNullException(nameof(filename));
+
 			var setting = provider.GetSettings(filename);
 			return AddMountConfiguration(configurationBuilder, setting);
 		}
@@ -42,12 +47,17 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// <param name="provider">The settings provider.</param>
 		/// <param name="filenames">The configuration file names without extensions.</param>
 		/// <returns>The configuration builder for method chaining.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="configurationBuilder"/>, <paramref name="provider"/>, or <paramref name="filenames"/> is null.</exception>
 		/// <remarks>
 		/// For each filename, loads: {filename}.json + {filename}.{Environment}.json
 		/// This allows organizing configuration by concern (database, logging, services, etc.).
 		/// </remarks>
 		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, SettingsProvider provider, params string[] filenames)
 		{
+			if (configurationBuilder == null) throw new ArgumentNullException(nameof(configurationBuilder));
+			if (provider == null) throw new ArgumentNullException(nameof(provider));
+			if (filenames == null) throw new ArgumentNullException(nameof(filenames));
+
 			foreach (var filename in filenames)
 			{
 				var setting = provider.GetSettings(filename);
@@ -62,6 +72,7 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// <param name="configurationBuilder">The configuration builder.</param>
 		/// <param name="actDeleg">Action to configure the settings.</param>
 		/// <returns>The configuration builder for method chaining.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="configurationBuilder"/> or <paramref name="actDeleg"/> is null.</exception>
 		/// <example>
 		/// <code>
 		/// config.AddMountConfiguration(settings =>
@@ -73,6 +84,9 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// </example>
 		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, Action<Settings> actDeleg)
 		{
+			if (configurationBuilder == null) throw new ArgumentNullException(nameof(configurationBuilder));
+			if (actDeleg == null) throw new ArgumentNullException(nameof(actDeleg));
+
 			var setting = SettingsProvider.PrepareDefault();
 			actDeleg.Invoke(setting);
 			return AddMountConfiguration(configurationBuilder, setting);
@@ -84,8 +98,12 @@ namespace Microsoft.Extensions.DependencyInjection
 		/// <param name="configurationBuilder">The configuration builder.</param>
 		/// <param name="settings">The settings containing file name, mount path, and environment name.</param>
 		/// <returns>The configuration builder for method chaining.</returns>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="configurationBuilder"/> or <paramref name="settings"/> is null.</exception>
 		public static IConfigurationBuilder AddMountConfiguration(this IConfigurationBuilder configurationBuilder, Settings settings)
 		{
+			if (configurationBuilder == null) throw new ArgumentNullException(nameof(configurationBuilder));
+			if (settings == null) throw new ArgumentNullException(nameof(settings));
+
 			configurationBuilder.SetBasePath(Path.Combine(settings.CurrentDirectory, settings.ConfigMountPath))
 											.AddJsonFile($"{settings.FileName}.json", optional: false, reloadOnChange: true)
 											.AddJsonFile($"{settings.FileName}.{settings.HostingName}.json", optional: settings.Optional, reloadOnChange: true);

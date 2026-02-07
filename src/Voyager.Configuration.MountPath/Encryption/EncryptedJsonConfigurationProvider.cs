@@ -52,6 +52,22 @@ namespace Voyager.Configuration.MountPath.Encryption
 					Path.GetFileName(_source.Path),
 					ex);
 			}
+			catch (InvalidDataException ex) when (ex.InnerException is EncryptionException)
+			{
+				// FileConfigurationProvider wrapped our EncryptionException - unwrap and rethrow it
+				throw ex.InnerException;
+			}
+			catch (InvalidDataException ex) when (ex.InnerException is JsonException jsonEx)
+			{
+				// FileConfigurationProvider wrapped JsonException
+				var lineInfo = jsonEx.LineNumber.HasValue ? $" at line {jsonEx.LineNumber}" : "";
+				throw new ConfigurationException(
+					$"Failed to parse configuration file '{Path.GetFileName(_source.Path)}'. " +
+					$"The file contains invalid JSON{lineInfo}. Check file syntax.",
+					Path.GetDirectoryName(_source.Path),
+					Path.GetFileName(_source.Path),
+					jsonEx);
+			}
 			catch (JsonException ex)
 			{
 				var lineInfo = ex.LineNumber.HasValue ? $" at line {ex.LineNumber}" : "";
@@ -64,6 +80,31 @@ namespace Voyager.Configuration.MountPath.Encryption
 			}
 			catch (Exception ex) when (ex is not ConfigurationException && ex is not EncryptionException)
 			{
+				// Search for specific exceptions in the exception chain
+				var innerEx = FindInnerException<EncryptionException>(ex);
+				if (innerEx != null)
+				{
+					throw innerEx;
+				}
+
+				var configEx = FindInnerException<ConfigurationException>(ex);
+				if (configEx != null)
+				{
+					throw configEx;
+				}
+
+				var jsonEx = FindInnerException<JsonException>(ex);
+				if (jsonEx != null)
+				{
+					var lineInfo = jsonEx.LineNumber.HasValue ? $" at line {jsonEx.LineNumber}" : "";
+					throw new ConfigurationException(
+						$"Failed to parse configuration file '{Path.GetFileName(_source.Path)}'. " +
+						$"The file contains invalid JSON{lineInfo}. Check file syntax.",
+						Path.GetDirectoryName(_source.Path),
+						Path.GetFileName(_source.Path),
+						jsonEx);
+				}
+
 				// Wrap any other unexpected exceptions
 				throw new ConfigurationException(
 					$"Unexpected error loading configuration file '{Path.GetFileName(_source.Path)}': {ex.Message}",
@@ -126,6 +167,26 @@ namespace Voyager.Configuration.MountPath.Encryption
 					null,
 					ex);
 			}
+		}
+
+		/// <summary>
+		/// Finds an exception of the specified type in the exception chain.
+		/// </summary>
+		/// <typeparam name="T">The exception type to find.</typeparam>
+		/// <param name="ex">The root exception.</param>
+		/// <returns>The found exception or null.</returns>
+		private static T? FindInnerException<T>(Exception ex) where T : Exception
+		{
+			var current = ex;
+			while (current != null)
+			{
+				if (current is T found)
+				{
+					return found;
+				}
+				current = current.InnerException;
+			}
+			return null;
 		}
 
 		/// <inheritdoc />

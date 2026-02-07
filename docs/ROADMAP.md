@@ -184,6 +184,7 @@ vconfig decrypt-value "encrypted_text"
 - ✅ ADR-002: Settings Builder Pattern Decision
 - ✅ ADR-003: Encryption Delegation to External Tools
 - ✅ ADR-004: CLI Tool for Configuration Encryption
+- ✅ ADR-005: Async Configuration Loading (Rejected)
 
 ### 4.3 Refaktoryzacja Extension Methods (SRP)
 
@@ -242,12 +243,25 @@ vconfig decrypt-value "encrypted_text"
 - [ ] Dodać walidację we wszystkich publicznych metodach
 - [ ] Lepsze komunikaty błędów z kontekstem
 
-### 6.2 Wsparcie dla async
+### 6.2 ❌ Wsparcie dla async (ODRZUCONE)
 
-**Zadania:**
-- [ ] Dodać async overloads dla extension methods
-- [ ] `AddMountConfigurationAsync`
-- [ ] Async loading w provider
+**Status:** ❌ ODRZUCONE przez ADR-005
+
+**Decyzja:** Nie implementujemy async configuration loading.
+
+**Dlaczego odrzucono:**
+- ASP.NET Core `IConfigurationProvider.Load()` jest synchroniczne z założenia
+- Niemożliwe stworzenie prawdziwego async - byłby to fake async (blokowanie przebranne za async)
+- Główny use case (lokalne volume mounts) nie wymaga async
+- Startup aplikacji jest synchroniczny - blokowanie jest oczekiwane
+- Dodaje kompleksowość bez rzeczywistych korzyści
+
+**Zobacz:** [ADR-005: Async Configuration Loading](adr/ADR-005-async-configuration-loading.md)
+
+~~Zadania (anulowane):~~
+- ~~[ ] Dodać async overloads dla extension methods~~
+- ~~[ ] `AddMountConfigurationAsync`~~
+- ~~[ ] Async loading w provider~~
 
 ### 6.3 Przykłady użycia
 
@@ -329,4 +343,4 @@ vconfig decrypt-value "encrypted_text"
 ---
 
 *Dokument utworzony: 2026-02-05*
-*Ostatnia aktualizacja: 2026-02-07 (po ADR-003 i ADR-004)*
+*Ostatnia aktualizacja: 2026-02-07 (po ADR-003, ADR-004, ADR-005)*

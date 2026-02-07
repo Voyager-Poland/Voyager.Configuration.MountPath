@@ -8,8 +8,8 @@ namespace Voyager.Configuration.MountPath.Encryption
 	/// </summary>
 	public class Encryptor : IEncryptor
 	{
-		private readonly byte[] keyBytes;
-		private readonly byte[] ivBytes;
+		private readonly byte[] _keyBytes;
+		private readonly byte[] _ivBytes;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Encryptor"/> class.
@@ -24,8 +24,8 @@ namespace Voyager.Configuration.MountPath.Encryption
 			if (key.Length < 8)
 				throw new ArgumentException("Key must be at least 8 characters long.", nameof(key));
 
-			keyBytes = Encoding.ASCII.GetBytes(key.Substring(0, 8));
-			ivBytes = Encoding.ASCII.GetBytes(key.Substring(key.Length - 8, 8));
+			_keyBytes = Encoding.ASCII.GetBytes(key.Substring(0, 8));
+			_ivBytes = Encoding.ASCII.GetBytes(key.Substring(key.Length - 8, 8));
 		}
 
 		/// <inheritdoc />
@@ -35,7 +35,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 				throw new ArgumentNullException(nameof(plaintext));
 
 #pragma warning disable CS0618 // LegacyDesCipherProvider is intentionally used for backward compatibility
-			using (var cipherProvider = new LegacyDesCipherProvider(keyBytes, ivBytes))
+			using (var cipherProvider = new LegacyDesCipherProvider(_keyBytes, _ivBytes))
 #pragma warning restore CS0618
 			{
 				return Convert.ToBase64String(cipherProvider.Encrypt(plaintext));
@@ -49,7 +49,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 				throw new ArgumentNullException(nameof(encryptedData));
 
 #pragma warning disable CS0618 // LegacyDesCipherProvider is intentionally used for backward compatibility
-			using (var cipherProvider = new LegacyDesCipherProvider(keyBytes, ivBytes))
+			using (var cipherProvider = new LegacyDesCipherProvider(_keyBytes, _ivBytes))
 #pragma warning restore CS0618
 			{
 				return cipherProvider.Decrypt(Convert.FromBase64String(encryptedData));

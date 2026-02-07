@@ -11,9 +11,9 @@ namespace Voyager.Configuration.MountPath.Encryption
 	[Obsolete("DES encryption is deprecated. Use AES-256-GCM for new implementations.")]
 	internal class LegacyDesCipherProvider : ICipherProvider
 	{
-		private readonly byte[] keyBytes;
-		private readonly byte[] ivBytes;
-		private readonly DESCryptoServiceProvider cryptoProvider;
+		private readonly byte[] _keyBytes;
+		private readonly byte[] _ivBytes;
+		private readonly DESCryptoServiceProvider _cryptoProvider;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LegacyDesCipherProvider"/> class.
@@ -22,16 +22,16 @@ namespace Voyager.Configuration.MountPath.Encryption
 		/// <param name="ivBytes">The 8-byte initialization vector.</param>
 		public LegacyDesCipherProvider(byte[] keyBytes, byte[] ivBytes)
 		{
-			this.keyBytes = keyBytes ?? throw new ArgumentNullException(nameof(keyBytes));
-			this.ivBytes = ivBytes ?? throw new ArgumentNullException(nameof(ivBytes));
+			this._keyBytes = keyBytes ?? throw new ArgumentNullException(nameof(keyBytes));
+			this._ivBytes = ivBytes ?? throw new ArgumentNullException(nameof(ivBytes));
 
-			cryptoProvider = new DESCryptoServiceProvider();
+			_cryptoProvider = new DESCryptoServiceProvider();
 		}
 
 		/// <inheritdoc />
 		public void Dispose()
 		{
-			cryptoProvider.Dispose();
+			_cryptoProvider.Dispose();
 		}
 
 		/// <inheritdoc />
@@ -40,7 +40,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 			if (plaintext == null)
 				throw new ArgumentNullException(nameof(plaintext));
 
-			var transform = cryptoProvider.CreateEncryptor(keyBytes, ivBytes);
+			var transform = _cryptoProvider.CreateEncryptor(_keyBytes, _ivBytes);
 			using (var ms = new MemoryStream())
 			using (var cryptoStream = new CryptoStream(ms, transform, CryptoStreamMode.Write))
 			using (var writer = new StreamWriter(cryptoStream))
@@ -60,7 +60,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 			using (var cryptoProvider = new DESCryptoServiceProvider())
 			using (var ms = new MemoryStream(encryptedData))
-			using (var cryptoStream = new CryptoStream(ms, cryptoProvider.CreateDecryptor(keyBytes, ivBytes), CryptoStreamMode.Read))
+			using (var cryptoStream = new CryptoStream(ms, cryptoProvider.CreateDecryptor(_keyBytes, _ivBytes), CryptoStreamMode.Read))
 			using (var reader = new StreamReader(cryptoStream))
 			{
 				return reader.ReadToEnd();

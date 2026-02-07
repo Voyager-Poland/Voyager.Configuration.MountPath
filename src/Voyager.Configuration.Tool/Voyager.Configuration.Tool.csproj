@@ -23,6 +23,7 @@
       For new projects, use Mozilla SOPS instead.
     </Description>
     <PackageTags>configuration;encryption;json;cli;tool;migration;sops</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>
   </PropertyGroup>

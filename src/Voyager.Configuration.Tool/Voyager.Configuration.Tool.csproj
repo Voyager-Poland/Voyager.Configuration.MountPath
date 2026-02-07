@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- Override multi-targeting from Directory.Build.props - global tools should target one framework -->
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -35,8 +36,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Reference to main library for encryption -->
-    <ProjectReference Include="..\Voyager.Configuration.MountPath\Voyager.Configuration.MountPath.csproj" />
+    <!-- Reference to main library for encryption (only include net8.0 in package) -->
+    <ProjectReference Include="..\Voyager.Configuration.MountPath\Voyager.Configuration.MountPath.csproj">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </ProjectReference>
 
     <!-- System.CommandLine for modern CLI parsing -->
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />

@@ -82,14 +82,16 @@ From project maintainer:
 
 ## Decision
 
-**Create a unified CLI tool as a dotnet global tool: `voyager-config`**
+**Create a unified CLI tool as a dotnet global tool: `vconfig`**
 
 This tool serves as a **migration helper** for users transitioning from built-in encryption to external secret management solutions (SOPS, etc.).
+
+**Command name:** `vconfig` (short, friendly, memorable)
 
 ### Proposed Solution
 
 **Package:** `Voyager.Configuration.Tool` (dotnet global tool)
-**Command:** `voyager-config` (short, memorable)
+**Command:** `vconfig` (short, memorable)
 
 **Commands:**
 
@@ -98,28 +100,28 @@ This tool serves as a **migration helper** for users transitioning from built-in
 dotnet tool install -g Voyager.Configuration.Tool
 
 # Encrypt values in JSON file (creates library-compatible encrypted config)
-voyager-config encrypt --input config/database.json --output config/database.json --key-env ENCKEY
+vconfig encrypt --input config/database.json --output config/database.json --key-env ENCKEY
 # Input:  { "ConnectionString": "Server=prod;Password=secret" }
 # Output: { "ConnectionString": "AgB7CjEyMzQ1Njc4..." }
 
 # Decrypt values in JSON file (for migration to SOPS)
-voyager-config decrypt --input config/database.json --output config/database.plain.json --key-env ENCKEY
+vconfig decrypt --input config/database.json --output config/database.plain.json --key-env ENCKEY
 # Input:  { "ConnectionString": "AgB7CjEyMzQ1Njc4..." }
 # Output: { "ConnectionString": "Server=prod;Password=secret" }
 
 # Encrypt single value (backward compatibility with old tools)
-voyager-config encrypt-value "text to encrypt"
+vconfig encrypt-value "text to encrypt"
 # Output: AgB7CjEyMzQ1Njc4...
 
 # Decrypt single value (backward compatibility with old tools)
-voyager-config decrypt-value "AgB7CjEyMzQ1Njc4..."
+vconfig decrypt-value "AgB7CjEyMzQ1Njc4..."
 # Output: text to encrypt
 
 # Batch encrypt multiple files
-voyager-config encrypt --batch "config/*.json" --output-dir config/encrypted --key-env ENCKEY
+vconfig encrypt --batch "config/*.json" --output-dir config/encrypted --key-env ENCKEY
 
 # Migrate: decrypt all values and prepare for SOPS
-voyager-config migrate --input config/secrets.json --output config/secrets.plain.json
+vconfig migrate --input config/secrets.json --output config/secrets.plain.json
 ```
 
 ### Tool Architecture
@@ -133,7 +135,7 @@ voyager-config migrate --input config/secrets.json --output config/secrets.plain
 
 1. **`encrypt`** - Encrypt values in JSON configuration file
    ```
-   voyager-config encrypt [OPTIONS]
+   vconfig encrypt [OPTIONS]
 
    Options:
      -i, --input <FILE>       Input plain JSON file (required)
@@ -153,7 +155,7 @@ voyager-config migrate --input config/secrets.json --output config/secrets.plain
 
 2. **`decrypt`** - Decrypt values in JSON configuration file
    ```
-   voyager-config decrypt [OPTIONS]
+   vconfig decrypt [OPTIONS]
 
    Options:
      -i, --input <FILE>       Input encrypted JSON file (required)
@@ -169,7 +171,7 @@ voyager-config migrate --input config/secrets.json --output config/secrets.plain
 
 3. **`encrypt-value`** - Encrypt single text value
    ```
-   voyager-config encrypt-value <TEXT> [OPTIONS]
+   vconfig encrypt-value <TEXT> [OPTIONS]
 
    Options:
      -k, --key <KEY>          Encryption key (not recommended)
@@ -181,7 +183,7 @@ voyager-config migrate --input config/secrets.json --output config/secrets.plain
 
 4. **`decrypt-value`** - Decrypt single text value
    ```
-   voyager-config decrypt-value <ENCRYPTED_TEXT> [OPTIONS]
+   vconfig decrypt-value <ENCRYPTED_TEXT> [OPTIONS]
 
    Options:
      -k, --key <KEY>          Encryption key (not recommended)
@@ -193,7 +195,7 @@ voyager-config migrate --input config/secrets.json --output config/secrets.plain
 
 5. **`migrate`** - Decrypt and prepare for SOPS migration
    ```
-   voyager-config migrate [OPTIONS]
+   vconfig migrate [OPTIONS]
 
    Options:
      -i, --input <FILE>       Input encrypted JSON file (required)
@@ -279,7 +281,7 @@ EOF
 
 # 2. Encrypt values in file (in-place)
 export ASPNETCORE_ENCODEKEY="MyEncryptionKey12345"
-voyager-config encrypt --input config/database.json --in-place
+vconfig encrypt --input config/database.json --in-place
 
 # 3. Verify structure preserved
 cat config/database.json
@@ -300,7 +302,7 @@ cat config/database.json
 
 ```bash
 # 1. Decrypt existing encrypted config
-voyager-config decrypt --input config/database.json --output config/database.plain.json
+vconfig decrypt --input config/database.json --output config/database.plain.json
 
 # 2. Verify decryption worked
 cat config/database.plain.json
@@ -321,10 +323,10 @@ git commit -m "Migrate from DES to SOPS encryption"
 
 ```bash
 # Encrypt all plain configs
-voyager-config encrypt --batch "config/*.json" --output-dir config/encrypted
+vconfig encrypt --batch "config/*.json" --output-dir config/encrypted
 
 # Or decrypt all encrypted configs for migration
-voyager-config decrypt --batch "config/*.json" --output-dir config/decrypted
+vconfig decrypt --batch "config/*.json" --output-dir config/decrypted
 
 # Now ready for SOPS encryption
 for file in config/decrypted/*.json; do
@@ -336,15 +338,15 @@ done
 
 ```bash
 # Encrypt single value (like old Voyager.Configuration.Encrypt)
-voyager-config encrypt-value "Server=prod;Password=secret"
+vconfig encrypt-value "Server=prod;Password=secret"
 # Output: AgB7CjEyMzQ1Njc4OTBhYmNkZWYxMjM0NTY3ODkwYWJjZGVm...
 
 # Decrypt single value (like old Voyager.Configuration.Decrypt)
-voyager-config decrypt-value "AgB7CjEyMzQ1Njc4OTBhYmNkZWYxMjM0NTY3ODkwYWJjZGVm..."
+vconfig decrypt-value "AgB7CjEyMzQ1Njc4OTBhYmNkZWYxMjM0NTY3ODkwYWJjZGVm..."
 # Output: Server=prod;Password=secret
 
 # Use in shell scripts
-ENCRYPTED=$(voyager-config encrypt-value "my-secret")
+ENCRYPTED=$(vconfig encrypt-value "my-secret")
 echo "Encrypted: $ENCRYPTED"
 ```
 
@@ -441,7 +443,7 @@ param($InputFile, $OutputFile, $Key)
 
 ## Recommended Approach: Dotnet Global Tool
 
-**Decision:** Create `voyager-config` as a dotnet global tool
+**Decision:** Create `vconfig` as a dotnet global tool
 
 ### Why This Is The Right Choice
 
@@ -530,7 +532,7 @@ param($InputFile, $OutputFile, $Key)
 
 1. **Clear Deprecation Warnings**
    ```bash
-   $ voyager-config encrypt file.json
+   $ vconfig encrypt file.json
 
    ⚠️  WARNING: Built-in encryption is DEPRECATED
    This tool is provided for migration purposes only.
@@ -586,7 +588,7 @@ param($InputFile, $OutputFile, $Key)
        <OutputType>Exe</OutputType>
        <TargetFramework>net6.0</TargetFramework>
        <PackAsTool>true</PackAsTool>
-       <ToolCommandName>voyager-config</ToolCommandName>
+       <ToolCommandName>vconfig</ToolCommandName>
        <PackageId>Voyager.Configuration.Tool</PackageId>
        <IsPackable>true</IsPackable>
      </PropertyGroup>
@@ -617,15 +619,16 @@ param($InputFile, $OutputFile, $Key)
 
 ## Tool Naming
 
-### Selected: `voyager-config`
+### Selected: `vconfig`
 
 **Pros:**
-- Short and memorable
-- Namespaced (voyager prefix)
-- Indicates purpose (config tool)
+- Short and memorable (5 characters)
+- Clear purpose (v = Voyager, config = configuration)
 - Easy to type
+- Friendly and concise
 
 **Alternatives considered:**
+- `voyager-config` - Too long, initial candidate
 - `voy-config` - Shorter but less clear
 - `voyager-crypt` - Sounds too permanent
 - `voyager-migrate` - Too specific to one command
@@ -642,7 +645,7 @@ Voyager.Configuration.Decrypt.exe "encrypted_value"
 
 **New:**
 ```bash
-voyager-config decrypt --input file.json --output plain.json
+vconfig decrypt --input file.json --output plain.json
 ```
 
 **Migration path:**

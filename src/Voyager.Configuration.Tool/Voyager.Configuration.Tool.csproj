@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Package as dotnet global tool -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>vconfig</ToolCommandName>
+    <PackageId>Voyager.Configuration.Tool</PackageId>
+    <IsPackable>true</IsPackable>
+
+    <!-- NuGet metadata -->
+    <Title>Voyager Configuration Tool - CLI for JSON encryption/decryption</Title>
+    <Authors>Andrzej Swistowski</Authors>
+    <Description>
+      CLI tool for encrypting and decrypting JSON configuration files compatible with Voyager.Configuration.MountPath library.
+      Provides migration helper for transitioning from built-in encryption to SOPS.
+
+      WARNING: Built-in encryption is deprecated. This tool is provided for backward compatibility and migration purposes only.
+      For new projects, use Mozilla SOPS instead.
+    </Description>
+    <PackageTags>configuration;encryption;json;cli;tool;migration;sops</PackageTags>
+    <PackageProjectUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference to main library for encryption -->
+    <ProjectReference Include="..\Voyager.Configuration.MountPath\Voyager.Configuration.MountPath.csproj" />
+
+    <!-- System.CommandLine for modern CLI parsing -->
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+</Project>

@@ -239,18 +239,23 @@ vconfig decrypt-value "encrypted_text"
 
 ### 6.1 ✅ Lepsza obsługa błędów
 
-**Status:** ✅ Zakończone (ADR)
+**Status:** ✅ Zakończone
 
 **Decyzja:** ADR-006 zaakceptował implementację custom exceptions z ograniczonym zakresem.
 
-**Implementacja (zaakceptowana przez ADR-006):**
-- [ ] Utworzyć 2 typy wyjątków:
-  - `ConfigurationException` - dla błędów ładowania konfiguracji
-  - `EncryptionException` - dla błędów szyfrowania/deszyfrowania
-- [ ] Opakowywać framework exceptions z kontekstem (MountPath, FileName)
-- [ ] Walidacja w setterach klasy `Settings`
-- [ ] Null checks w extension methods (`ArgumentNullException.ThrowIfNull`)
-- [ ] Lepsze komunikaty błędów zawierające: filename, mount path, kontekst operacji
+**Implementacja (zakończona):**
+- ✅ Utworzono 2 typy wyjątków:
+  - `ConfigurationException` - dla błędów ładowania konfiguracji (z MountPath, FileName)
+  - `EncryptionException` - dla błędów szyfrowania/deszyfrowania (z Key)
+- ✅ Opakowywanie framework exceptions z kontekstem:
+  - `FileNotFoundException` → `ConfigurationException`
+  - `JsonException` → `ConfigurationException` (z numerem linii)
+  - `CryptographicException` → `EncryptionException` (z nazwą klucza)
+- ✅ Inteligentne rozpakowywanie zagnieżdżonych wyjątków (`FindInnerException<T>`)
+- ✅ Walidacja w setterach klasy `Settings` (MountPath, FileName, CurrentDirectory, Key)
+- ✅ Null checks w extension methods (`ArgumentNullException`)
+- ✅ Lepsze komunikaty błędów zawierające: filename, mount path, kontekst operacji
+- ✅ Testy jednostkowe (14 testów) - wszystkie przechodzą
 
 **Czego NIE robimy:**
 - ❌ Nadmierna walidacja w każdej metodzie (over-engineering)
@@ -359,4 +364,4 @@ vconfig decrypt-value "encrypted_text"
 ---
 
 *Dokument utworzony: 2026-02-05*
-*Ostatnia aktualizacja: 2026-02-07 (po ADR-003, ADR-004, ADR-005)*
+*Ostatnia aktualizacja: 2026-02-08 (po ADR-003, ADR-004, ADR-005, ADR-006 - implementacja)*

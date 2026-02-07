@@ -609,30 +609,82 @@ ConfigurationException
 
 **Assessment:** ❌ Rejected - too complex for our needs
 
-### Alternative 3: Result<T> Pattern (No Exceptions)
+### Alternative 3: Result<T> Pattern with Voyager.Common.Results
 
-**Approach:** Return Result objects instead of throwing.
+**Context:** Voyager already has a Result pattern library: [Voyager.Common.Results](https://github.com/Voyager-Poland/Voyager.Common.Results)
+
+This library provides `Result<T>` types for explicit error handling without exceptions.
+
+**Approach:** Use Result objects instead of throwing exceptions.
 
 ```csharp
+// Theoretical usage with Voyager.Common.Results
 public Result<IConfigurationRoot> BuildConfiguration()
 {
     if (!File.Exists(path))
         return Result.Failure<IConfigurationRoot>("File not found");
 
-    // ...
+    try
+    {
+        var config = LoadConfiguration();
+        return Result.Success(config);
+    }
+    catch (JsonException ex)
+    {
+        return Result.Failure<IConfigurationRoot>($"Invalid JSON: {ex.Message}");
+    }
 }
+
+// Usage
+var result = BuildConfiguration();
+if (result.IsFailure)
+{
+    logger.LogError(result.Error);
+    return;
+}
+var config = result.Value;
 ```
 
 **Pros:**
-- Explicit error handling
-- No exceptions
+- Explicit error handling - forces caller to handle errors
+- No exceptions - errors are values
+- Type-safe error handling
+- Already available in Voyager ecosystem
 
 **Cons:**
-- Doesn't fit ASP.NET Core configuration system (expects exceptions)
-- Breaking change to existing patterns
-- Configuration loading should fail fast
+- **Incompatible with ASP.NET Core configuration system** - `IConfigurationProvider.Load()` is `void`, expects exceptions
+- **Breaking change** - would require completely different API from ASP.NET Core conventions
+- **Infrastructure-level concern** - configuration loading is infrastructure, Result pattern is better for domain/application layer
+- **Fail-fast is appropriate** - application can't start without configuration, exceptions are correct
+- **Framework integration** - ASP.NET Core startup expects exceptions for configuration errors
 
-**Assessment:** ❌ Rejected - incompatible with ASP.NET Core conventions
+**Why Result pattern is wrong here:**
+
+1. **Layer mismatch** - Result pattern is excellent for:
+   - Domain logic (business rules validation)
+   - Application services (use case orchestration)
+   - API responses (returning errors to clients)
+
+   But **not** for infrastructure concerns like configuration loading.
+
+2. **Framework contract** - ASP.NET Core's `IConfigurationProvider` interface:
+   ```csharp
+   public interface IConfigurationProvider
+   {
+       void Load(); // void - cannot return Result<T>
+   }
+   ```
+
+   We cannot change this interface. The framework expects exceptions.
+
+3. **Startup semantics** - Configuration loads at application startup:
+   ```csharp
+   var app = builder.Build(); // If config fails, app should throw, not return Result
+   ```
+
+   Startup failures should be exceptional (exceptions), not expected outcomes (Results).
+
+**Assessment:** ❌ Rejected - Result pattern is great for domain/application layers, but incompatible with infrastructure-level ASP.NET Core configuration system. The framework contract requires exceptions, and fail-fast behavior is appropriate at startup.
 
 ### Alternative 4: Two Exception Types (CHOSEN)
 
@@ -787,6 +839,14 @@ Ensure the file exists and the mount path is correctly configured.
 
 - **ADR-003**: Encryption deprecation - we still need good error messages for legacy encryption
 - **ADR-005**: Async rejected - error handling remains synchronous, which simplifies exception handling
+
+## Related Libraries
+
+- **[Voyager.Common.Results](https://github.com/Voyager-Poland/Voyager.Common.Results)**: Voyager's Result pattern library for explicit error handling. Not used here because:
+  - Result pattern is designed for domain/application layers, not infrastructure
+  - ASP.NET Core configuration system expects exceptions (IConfigurationProvider.Load() is void)
+  - Configuration loading at startup should fail fast with exceptions
+  - See Alternative 3 for detailed analysis
 
 ## Future Considerations
 

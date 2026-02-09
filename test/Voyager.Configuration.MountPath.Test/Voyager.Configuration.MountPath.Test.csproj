@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Override global multi-targeting - single framework for tests -->
     <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
+    <!-- Don't require XML documentation for test projects -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,14 +55,6 @@
     <None Update="config\appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EditorConfigFiles Remove="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="E:\Zrodla\gitHub\Voyager.Configuration.MountPath\test\Voyager.Configuration.MountPath.Test\.editorconfig" />
   </ItemGroup>
 
 </Project>

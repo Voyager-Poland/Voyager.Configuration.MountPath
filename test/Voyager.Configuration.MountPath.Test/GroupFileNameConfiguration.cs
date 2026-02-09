@@ -1,26 +1,30 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-  class GroupFileNameConfiguration : FileNameConfiguration
-  {
-    protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
-    {
-      config.AddMountConfiguration(hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "srp", "another");
-    }
+	/// <summary>
+	/// Tests loading multiple configuration files at once.
+	/// </summary>
+	[TestFixture]
+	internal class GroupFileNameConfiguration : ConfigurationTestBase
+	{
+		protected override void ConfigureHost(HostBuilderContext context, IConfigurationBuilder config)
+		{
+			config.AddMountConfiguration(settings =>
+			{
+				settings.HostingName = "MyEnv";
+				settings.Optional = false;
+			});
+			config.AddMountConfiguration(context.HostingEnvironment.GetSettingsProvider(), "srp", "another");
+		}
 
-    [Test]
-    public override void TestNewConfig()
-    {
-      base.TestNewConfig();
-    }
-
-    protected override void CheckFile(IConfiguration config)
-    {
-      base.CheckFile(config);
-      Assert.That(config["another"], Is.EqualTo("yes"));
-    }
-  }
+		[Test]
+		public void LoadConfig_WithMultipleFiles_ContainsAllValues()
+		{
+			Assert.That(Configuration["EnvironmentSetting"], Is.EqualTo("specific"));
+			Assert.That(Configuration["spr"], Is.EqualTo("yes"));
+			Assert.That(Configuration["another"], Is.EqualTo("yes"));
+		}
+	}
 }

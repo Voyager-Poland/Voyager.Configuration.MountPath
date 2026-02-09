@@ -1,0 +1,37 @@
+<Project>
+  <!--
+    This file applies to ALL projects in this solution.
+    Any .csproj file will automatically inherit these settings.
+  -->
+  <!-- Import build configuration -->
+  <Import Project="build/Build.Versioning.props" />
+  <Import Project="build/Build.CodeQuality.props" />
+  <Import Project="build/Build.SourceLink.props" />
+  <Import Project="build/Build.Package.props" />
+
+  <PropertyGroup>
+    <!-- Target Frameworks - Multi-target for .NET Core 3.1, .NET 6, .NET 8, and .NET Framework 4.8 -->
+    <TargetFrameworks>net48;netcoreapp3.1;net6.0;net8.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Authors>Andrzej Świstowski</Authors>
+    <Company>Sindbad IT sp. z o.o.</Company>
+    <Copyright>Copyright © Sindbad IT sp. z o.o. $([System.DateTime]::Now.Year)</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <LangVersion>10.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+</Project>

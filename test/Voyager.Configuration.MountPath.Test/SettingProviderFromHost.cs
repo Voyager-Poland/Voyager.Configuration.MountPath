@@ -7,7 +7,7 @@ namespace Voyager.Configuration.MountPath.Test;
 public class SettingProviderFromHost : IHostEnvironment
 {
 	private SettingsProvider provider;
-	const string HOSTINGNAME = "MyVariableValue";
+	private const string HOSTINGNAME = "MyVariableValue";
 
 	[SetUp]
 	public void Setup()

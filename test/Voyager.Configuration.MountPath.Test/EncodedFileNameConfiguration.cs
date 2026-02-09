@@ -1,26 +1,33 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Voyager.Configuration.MountPath.Test
 {
-  class EncodedFileNameConfiguration : FileNameConfiguration
-  {
-    protected override void AddFileConfig(HostBuilderContext hostingConfiguration, IConfigurationBuilder config)
-    {
-      base.AddFileConfig(hostingConfiguration, config);
-      config.AddEncryptedMountConfiguration("PowaznyTestks123456722228", hostingConfiguration.HostingEnvironment.GetSettingsProvider(), "encoded");
-    }
+	/// <summary>
+	/// Tests loading encrypted configuration values from a named file.
+	/// </summary>
+	[TestFixture]
+	internal class EncodedFileNameConfiguration : ConfigurationTestBase
+	{
+		private const string EncryptionKey = "PowaznyTestks123456722228";
 
-    public override void TestNewConfig()
-    {
-      base.TestNewConfig();
-    }
+		protected override void ConfigureHost(HostBuilderContext context, IConfigurationBuilder config)
+		{
+			config.AddMountConfiguration(settings =>
+			{
+				settings.HostingName = "MyEnv";
+				settings.Optional = false;
+			});
+			config.AddMountConfiguration(context.HostingEnvironment.GetSettingsProvider(), "srp");
+			config.AddEncryptedMountConfiguration(EncryptionKey, context.HostingEnvironment.GetSettingsProvider(), "encoded");
+		}
 
-    protected override void CheckFile(IConfiguration config)
-    {
-      base.CheckFile(config);
-      Assert.That(config["values"], Is.EqualTo("tekst to encode może jednak ma być dłuższy"));
-    }
-  }
+		[Test]
+		public void LoadConfig_WithEncryptedFile_DecryptsValues()
+		{
+			Assert.That(Configuration["EnvironmentSetting"], Is.EqualTo("specific"));
+			Assert.That(Configuration["spr"], Is.EqualTo("yes"));
+			Assert.That(Configuration["values"], Is.EqualTo("tekst to encode może jednak ma być dłuższy"));
+		}
+	}
 }

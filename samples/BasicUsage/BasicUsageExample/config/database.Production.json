@@ -1,0 +1,9 @@
+{
+  "ConnectionStrings": {
+    "Default": "Server=prod-db.example.com;Database=myapp_prod;User=produser;Password=***"
+  },
+  "Database": {
+    "Timeout": 60,
+    "MaxRetries": 5
+  }
+}

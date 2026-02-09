@@ -45,7 +45,8 @@ jamy własnego szyfrowania:**
 
 **Package:** `Voyager.Configuration.Tool` (dotnet global tool)
 **Command:** `vconfig`
-**Wersja:** v1.3.0-preview.4
+**Wersja:** v1.3.0-preview.5+
+**CI/CD:** ✅ Skonfigurowane - tool jest automatycznie pakowany i publikowany na NuGet
 
 **Komendy:**
 ```bash
@@ -202,14 +203,30 @@ vconfig decrypt-value "encrypted_text"
 
 ## Faza 5: Testy (ŚREDNI PRIORYTET)
 
-### 5.1 Rozszerzenie pokrycia testami
+### 5.1 ✅ Rozszerzenie pokrycia testami
 
-**Brakujące testy:**
-- [ ] SettingsProvider - edge cases (null, empty paths)
-- [ ] Configuration merge/override scenarios
-- [ ] Error cases (missing files, corrupted JSON)
-- [ ] Key validation edge cases
-- [ ] Extension methods null checks
+**Status:** ✅ Zakończone
+
+**Zaimplementowano:**
+- ✅ SettingsProvider - edge cases (null, empty paths) - 22 testy
+- ✅ Configuration merge/override scenarios - 10 testów
+- ✅ Error cases (missing files, corrupted JSON) - 18 testów
+- ✅ Key validation edge cases - 21 testów
+- ✅ Extension methods null checks - 26 testów
+
+**Nowe pliki testowe:**
+1. `SettingsProviderEdgeCasesTest.cs` - walidacja null/empty/whitespace, wartości domyślne
+2. `ConfigurationMergeTest.cs` - merge base + environment, override zagnieżdżonych wartości
+3. `ErrorHandlingTest.cs` - brakujące pliki, zepsuty JSON, specjalne znaki
+4. `KeyValidationTest.cs` - walidacja klucza szyfrowania, encrypt/decrypt round-trip
+5. `ExtensionMethodsNullCheckTest.cs` - null checks dla wszystkich extension methods
+
+**Statystyki:**
+- 109 testów total (24 istniejących + 85 nowych)
+- 93 passing ✓ (85%)
+- 16 failing ✗ (dokumentują brakującą walidację w prod code)
+
+**Branch:** `feature/add-edge-case-tests`
 
 ### 5.2 Testy negatywne
 
@@ -284,13 +301,24 @@ vconfig decrypt-value "encrypted_text"
 - ~~[ ] `AddMountConfigurationAsync`~~
 - ~~[ ] Async loading w provider~~
 
-### 6.3 Przykłady użycia
+### 6.3 ⏸️ Przykłady użycia
 
-**Zadania:**
-- [ ] Dodać folder `samples/`
-- [ ] Przykład podstawowy (mount configuration)
-- [ ] Przykład z Kubernetes/Docker
-- [ ] Przykład migracji z encryption do SOPS
+**Status:** ⏸️ Częściowo zakończone
+
+**Zaimplementowano:**
+- ✅ Folder `samples/` z README
+- ✅ **BasicUsage** - działający przykład konsoli
+  - Ładowanie konfiguracji z wielu plików
+  - Environment-specific overrides
+  - Kompletny, zbudowany, gotowy do uruchomienia
+
+**Planowane (placeholders created):**
+- 📋 **KubernetesExample** - Deployment z ConfigMaps
+- 📋 **MigrationToSops** - Przewodnik migracji z DES do SOPS
+
+**Temporary workaround:**
+- Przykłady Kubernetes dostępne w [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md)
+- Przykłady migracji dostępne w [README głównym](../README.md#kubernetes-example)
 
 ---
 
@@ -302,7 +330,7 @@ vconfig decrypt-value "encrypted_text"
 | 2. Architektura SOLID | ✅ WYSOKI | ✅ Zakończone |
 | 3. Jakość kodu | ✅ ŚREDNI | ✅ Zakończone |
 | 4. Jakość kodu - Pozostałe | 🟡 NISKI | Częściowo |
-| 5. Testy | 🟡 ŚREDNI | Do zrobienia |
+| 5. Testy | ✅ ŚREDNI | ✅ Większość zakończona |
 | 6. Funkcjonalność Ogólna | 🟡 NISKI | Do zrobienia |
 
 ---
@@ -311,9 +339,9 @@ vconfig decrypt-value "encrypted_text"
 
 | Wersja | Zakres zmian | Status |
 |--------|--------------|--------|
-| **v1.3.0-preview.4** | CLI tool `vconfig` (preview) | ✅ Zakończone |
-| **v2.0.0** | Deprecation notices, CLI tool stable, SOLID refactoring | 🔄 W trakcie |
-| **v2.x.x** | Bug fixes, tests, examples | 📋 Planowane |
+| **v1.3.0-preview.5+** | CLI tool `vconfig` (preview) + CI/CD | ✅ Zakończone |
+| **v2.0.0** | Deprecation notices, CLI tool stable, SOLID refactoring, Edge case tests | 🔄 W trakcie |
+| **v2.x.x** | Bug fixes, additional tests, examples | 📋 Planowane |
 | **v3.0.0** | **REMOVE encryption entirely** | 📋 Przyszłość |
 
 ---
@@ -321,13 +349,14 @@ vconfig decrypt-value "encrypted_text"
 ## Metryki Sukcesu
 
 ### Wersja 2.0
-- ✅ CLI tool `vconfig` dostępny na NuGet
+- ✅ CLI tool `vconfig` dostępny na NuGet (CI/CD skonfigurowane)
 - ✅ Deprecation warnings w README i dokumentacji
 - ✅ ADR-003 i ADR-004 dokumentują decyzje
 - ✅ Migracja do SOPS udokumentowana
 - ✅ SOLID principles zastosowane
 - ✅ Nullable reference types włączone
 - ✅ 0 ostrzeżeń kompilatora
+- ✅ 109 testów jednostkowych (93 passing, 16 dokumentują brakującą walidację)
 
 ### Wersja 3.0 (Przyszłość)
 - [ ] Całkowite usunięcie encryption
@@ -364,4 +393,4 @@ vconfig decrypt-value "encrypted_text"
 ---
 
 *Dokument utworzony: 2026-02-05*
-*Ostatnia aktualizacja: 2026-02-08 (po ADR-003, ADR-004, ADR-005, ADR-006 - implementacja)*
+*Ostatnia aktualizacja: 2026-02-09 (Faza 5.1: Edge case tests - 85 nowych testów, CI/CD dla vconfig tool)*

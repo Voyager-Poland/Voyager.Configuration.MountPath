@@ -1,0 +1,10 @@
+{
+  "ConnectionStrings": {
+    "Default": "Server=localhost;Database=myapp;User=dev;Password=dev123"
+  },
+  "Database": {
+    "Timeout": 30,
+    "MaxRetries": 3,
+    "EnablePooling": true
+  }
+}

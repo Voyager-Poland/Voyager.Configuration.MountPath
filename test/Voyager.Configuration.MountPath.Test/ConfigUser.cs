@@ -5,21 +5,21 @@ namespace Voyager.Configuration.MountPath.Test
 
   public class ConfigUser
   {
-    private readonly IConfiguration configuration;
+    private readonly IConfiguration _configuration;
 
     public ConfigUser(IConfiguration configuration)
     {
-      this.configuration = configuration;
+      _configuration = configuration;
     }
 
     public virtual string GetTestSetting()
     {
-      return configuration["TestSetting"]!;
+      return _configuration["TestSetting"]!;
     }
 
     public string GetEnvironmentSetting()
     {
-      return configuration["EnvironmentSetting"]!;
+      return _configuration["EnvironmentSetting"]!;
     }
 
   }

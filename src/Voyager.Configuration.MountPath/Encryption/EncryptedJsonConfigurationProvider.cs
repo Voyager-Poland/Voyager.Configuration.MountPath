@@ -11,7 +11,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 	/// </summary>
 	public class EncryptedJsonConfigurationProvider : JsonConfigurationProvider
 	{
-		private readonly IEncryptor encryptor;
+		private readonly IEncryptor _encryptor;
 		private readonly EncryptedJsonConfigurationSource _source;
 
 		/// <summary>
@@ -29,7 +29,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 			_source = source;
 			var factory = source.EncryptorFactory ?? new DefaultEncryptorFactory();
-			encryptor = factory.Create(source.Key);
+			_encryptor = factory.Create(source.Key);
 		}
 
 		/// <summary>
@@ -129,7 +129,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 					{
 						try
 						{
-							Data[key] = encryptor.Decrypt(value);
+							Data[key] = _encryptor.Decrypt(value);
 						}
 						catch (CryptographicException ex)
 						{
@@ -194,7 +194,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 		{
 			if (disposing)
 			{
-				if (encryptor is IDisposable disposableEncryptor)
+				if (_encryptor is IDisposable disposableEncryptor)
 				{
 					disposableEncryptor.Dispose();
 				}

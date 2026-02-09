@@ -48,9 +48,13 @@ jobs:
         slug: Voyager-Poland/Voyager.Configuration.MountPath
         fail_ci_if_error: false
 
-    - name: Pack (only on dotnet 8)
+    - name: Pack library (only on dotnet 8)
       if: matrix.dotnet-version == '8.0.x'
       run: dotnet pack --no-restore --no-build -c Release src/Voyager.Configuration.MountPath/Voyager.Configuration.MountPath.csproj
+
+    - name: Pack CLI tool (only on dotnet 8)
+      if: matrix.dotnet-version == '8.0.x'
+      run: dotnet pack --no-restore --no-build -c Release src/Voyager.Configuration.Tool/Voyager.Configuration.Tool.csproj
 
     - name: Upload artifacts (only on dotnet 8)
       if: matrix.dotnet-version == '8.0.x'

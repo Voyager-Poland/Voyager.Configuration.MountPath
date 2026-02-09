@@ -301,13 +301,24 @@ vconfig decrypt-value "encrypted_text"
 - ~~[ ] `AddMountConfigurationAsync`~~
 - ~~[ ] Async loading w provider~~
 
-### 6.3 Przykłady użycia
+### 6.3 ⏸️ Przykłady użycia
 
-**Zadania:**
-- [ ] Dodać folder `samples/`
-- [ ] Przykład podstawowy (mount configuration)
-- [ ] Przykład z Kubernetes/Docker
-- [ ] Przykład migracji z encryption do SOPS
+**Status:** ⏸️ Częściowo zakończone
+
+**Zaimplementowano:**
+- ✅ Folder `samples/` z README
+- ✅ **BasicUsage** - działający przykład konsoli
+  - Ładowanie konfiguracji z wielu plików
+  - Environment-specific overrides
+  - Kompletny, zbudowany, gotowy do uruchomienia
+
+**Planowane (placeholders created):**
+- 📋 **KubernetesExample** - Deployment z ConfigMaps
+- 📋 **MigrationToSops** - Przewodnik migracji z DES do SOPS
+
+**Temporary workaround:**
+- Przykłady Kubernetes dostępne w [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md)
+- Przykłady migracji dostępne w [README głównym](../README.md#kubernetes-example)
 
 ---
 

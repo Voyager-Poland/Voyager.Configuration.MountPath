@@ -19,7 +19,7 @@ namespace Voyager.Configuration.MountPath.Test
 				settings.Optional = false;
 			});
 			config.AddMountConfiguration(context.HostingEnvironment.GetSettingsProvider(), "srp");
-			EncryptedMountConfigurationExtensions.AddEncryptedMountConfiguration(config, EncryptionKey, context.HostingEnvironment.GetSettingsProvider(), "connectionstring");
+			config.AddEncryptedMountConfiguration(EncryptionKey, context.HostingEnvironment.GetSettingsProvider(), "connectionstring");
 		}
 
 		[Test]

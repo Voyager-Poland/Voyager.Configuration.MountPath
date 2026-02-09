@@ -15,7 +15,7 @@
 
     <!-- NuGet metadata -->
     <Title>Voyager Configuration Tool - CLI for JSON encryption/decryption</Title>
-    <Authors>Andrzej Swistowski</Authors>
+    <Authors>Andrzej Świstowski</Authors>
     <Description>
       CLI tool for encrypting and decrypting JSON configuration files compatible with Voyager.Configuration.MountPath library.
       Provides migration helper for transitioning from built-in encryption to SOPS.

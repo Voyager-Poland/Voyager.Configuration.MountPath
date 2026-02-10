@@ -10,11 +10,13 @@ namespace Voyager.Configuration.MountPath.Test
 	public class SettingsProviderEdgeCasesTest
 	{
 		[Test]
-		public void GetSettings_WithNullFilename_ThrowsArgumentNullException()
+		public void GetSettings_WithNullFilename_FallsBackToDefault()
 		{
 			var provider = new SettingsProvider();
 
-			Assert.Throws<ArgumentNullException>(() => provider.GetSettings(null!));
+			var settings = provider.GetSettings(null!);
+
+			Assert.That(settings.FileName, Is.EqualTo("appsettings"));
 		}
 
 		[Test]
@@ -22,6 +24,7 @@ namespace Voyager.Configuration.MountPath.Test
 		{
 			var provider = new SettingsProvider();
 
+			// Settings.FileName setter validates against null/whitespace
 			Assert.Throws<ArgumentException>(() => provider.GetSettings(string.Empty));
 		}
 
@@ -30,6 +33,7 @@ namespace Voyager.Configuration.MountPath.Test
 		{
 			var provider = new SettingsProvider();
 
+			// Settings.FileName setter validates against null/whitespace
 			Assert.Throws<ArgumentException>(() => provider.GetSettings("   "));
 		}
 

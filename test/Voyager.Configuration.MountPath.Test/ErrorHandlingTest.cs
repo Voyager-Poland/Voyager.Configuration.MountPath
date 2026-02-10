@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using System.Text.Json;
 
 namespace Voyager.Configuration.MountPath.Test
 {
@@ -49,7 +48,7 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void CorruptedJson_MissingClosingBrace_ThrowsJsonException()
+		public void CorruptedJson_MissingClosingBrace_ThrowsInvalidDataException()
 		{
 			var corruptedFile = Path.Combine(_testConfigPath, "corrupted.json");
 			File.WriteAllText(corruptedFile, @"{
@@ -60,11 +59,12 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("corrupted.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			// .NET wraps JSON parse errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
-		public void CorruptedJson_InvalidSyntax_ThrowsJsonException()
+		public void CorruptedJson_InvalidSyntax_ThrowsInvalidDataException()
 		{
 			var corruptedFile = Path.Combine(_testConfigPath, "invalid.json");
 			File.WriteAllText(corruptedFile, @"{
@@ -76,23 +76,28 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("invalid.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			// .NET wraps JSON parse errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
-		public void CorruptedJson_TrailingComma_ThrowsJsonException()
+		public void CorruptedJson_TrailingComma_IsAllowedByDotNet()
 		{
-			var corruptedFile = Path.Combine(_testConfigPath, "trailing.json");
-			File.WriteAllText(corruptedFile, @"{
+			// .NET JSON configuration provider allows trailing commas
+			var trailingFile = Path.Combine(_testConfigPath, "trailing.json");
+			File.WriteAllText(trailingFile, @"{
 				""Key1"": ""Value1"",
 				""Key2"": ""Value2"",
-			}");  // Trailing comma
+			}");
 
 			var builder = new ConfigurationBuilder()
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("trailing.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			IConfiguration config = null!;
+			Assert.DoesNotThrow(() => config = builder.Build());
+			Assert.That(config["Key1"], Is.EqualTo("Value1"));
+			Assert.That(config["Key2"], Is.EqualTo("Value2"));
 		}
 
 		[Test]
@@ -111,7 +116,7 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void EmptyFile_ThrowsJsonException()
+		public void EmptyFile_ThrowsInvalidDataException()
 		{
 			var emptyFile = Path.Combine(_testConfigPath, "empty.json");
 			File.WriteAllText(emptyFile, "");
@@ -120,11 +125,12 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("empty.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			// .NET wraps JSON parse errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
-		public void WhitespaceOnlyFile_ThrowsJsonException()
+		public void WhitespaceOnlyFile_ThrowsInvalidDataException()
 		{
 			var whitespaceFile = Path.Combine(_testConfigPath, "whitespace.json");
 			File.WriteAllText(whitespaceFile, "   \n\t  ");
@@ -133,11 +139,12 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("whitespace.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			// .NET wraps JSON parse errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
-		public void InvalidJsonType_ArrayAtRoot_ThrowsInvalidOperationException()
+		public void InvalidJsonType_ArrayAtRoot_ThrowsInvalidDataException()
 		{
 			var arrayFile = Path.Combine(_testConfigPath, "array.json");
 			File.WriteAllText(arrayFile, @"[""item1"", ""item2""]");
@@ -146,11 +153,12 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("array.json", optional: false);
 
-			Assert.Throws<InvalidOperationException>(() => builder.Build());
+			// .NET wraps format errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
-		public void InvalidJsonType_StringAtRoot_ThrowsInvalidOperationException()
+		public void InvalidJsonType_StringAtRoot_ThrowsInvalidDataException()
 		{
 			var stringFile = Path.Combine(_testConfigPath, "string.json");
 			File.WriteAllText(stringFile, @"""just a string""");
@@ -159,7 +167,8 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("string.json", optional: false);
 
-			Assert.Throws<InvalidOperationException>(() => builder.Build());
+			// .NET wraps format errors in InvalidDataException
+			Assert.Throws<InvalidDataException>(() => builder.Build());
 		}
 
 		[Test]
@@ -195,9 +204,9 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void ValidJsonWithComments_ThrowsJsonException()
+		public void ValidJsonWithComments_IsAllowedByDotNet()
 		{
-			// Standard JSON doesn't support comments
+			// .NET JSON configuration provider supports comments (JsonCommentHandling.Skip)
 			var commentedFile = Path.Combine(_testConfigPath, "commented.json");
 			File.WriteAllText(commentedFile, @"{
 				// This is a comment
@@ -208,7 +217,9 @@ namespace Voyager.Configuration.MountPath.Test
 				.SetBasePath(_testConfigPath)
 				.AddJsonFile("commented.json", optional: false);
 
-			Assert.Throws<JsonException>(() => builder.Build());
+			IConfiguration config = null!;
+			Assert.DoesNotThrow(() => config = builder.Build());
+			Assert.That(config["Key"], Is.EqualTo("Value"));
 		}
 
 		[Test]

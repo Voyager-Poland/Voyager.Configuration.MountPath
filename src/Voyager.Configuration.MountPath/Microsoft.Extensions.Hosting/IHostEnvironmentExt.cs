@@ -1,3 +1,4 @@
+using System;
 using Voyager.Configuration.MountPath;
 
 namespace Microsoft.Extensions.Hosting
@@ -18,6 +19,7 @@ namespace Microsoft.Extensions.Hosting
 		/// </remarks>
 		public static SettingsProvider GetSettingsProvider(this IHostEnvironment env)
 		{
+			if (env == null) throw new ArgumentNullException(nameof(env));
 			return new HostEnvironmentSettings(env);
 		}
 
@@ -32,6 +34,7 @@ namespace Microsoft.Extensions.Hosting
 		/// </remarks>
 		public static SettingsProvider GetSettingsProviderForce(this IHostEnvironment env)
 		{
+			if (env == null) throw new ArgumentNullException(nameof(env));
 			return new ForceHostEnvironmentSettings(env);
 		}
 	}

@@ -31,12 +31,14 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void AddMountConfiguration_WithNullFilename_ThrowsArgumentNullException()
+		public void AddMountConfiguration_WithNullFilenameElement_FallsBackToDefault()
 		{
+			// Null element in filenames array is handled gracefully by GetSettings(),
+			// which defaults null to "appsettings"
 			var builder = new ConfigurationBuilder();
 			var provider = new SettingsProvider();
 
-			Assert.Throws<ArgumentNullException>(() =>
+			Assert.DoesNotThrow(() =>
 				builder.AddMountConfiguration(provider, new string[] { null! }));
 		}
 
@@ -101,13 +103,15 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void AddEncryptedMountConfiguration_WithNullFilename_ThrowsArgumentNullException()
+		public void AddEncryptedMountConfiguration_WithNullFilenameElement_FallsBackToDefault()
 		{
+			// Null element in filenames array is handled gracefully by GetSettings(),
+			// which defaults null to "appsettings"
 			var builder = new ConfigurationBuilder();
 			var provider = new SettingsProvider();
 
-			Assert.Throws<ArgumentNullException>(() =>
-				builder.AddEncryptedMountConfiguration("key", provider, new string[] { null! }));
+			Assert.DoesNotThrow(() =>
+				builder.AddEncryptedMountConfiguration("12345678", provider, new string[] { null! }));
 		}
 
 		[Test]
@@ -140,11 +144,11 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
-		public void AddEncryptedJsonFile_WithNullPath_ThrowsArgumentException()
+		public void AddEncryptedJsonFile_WithNullPath_ThrowsArgumentNullException()
 		{
 			var builder = new ConfigurationBuilder();
 
-			Assert.Throws<ArgumentException>(() =>
+			Assert.Throws<ArgumentNullException>(() =>
 				builder.AddEncryptedJsonFile(null!, "key", optional: false, reloadOnChange: false));
 		}
 

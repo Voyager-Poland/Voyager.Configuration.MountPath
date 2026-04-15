@@ -1,4 +1,4 @@
-# ADR-009: AES-256-GCM Encryption with Versioned Ciphertext and Legacy DES Fallback
+# ADR-010: AES-256-GCM Encryption with Versioned Ciphertext and Legacy DES Fallback
 
 ## Status
 
@@ -35,12 +35,67 @@ Replace the deprecation path with a **pragmatic AES-256-GCM implementation** tha
 ### 1. Algorithm — AES-256-GCM
 
 - Use `System.Security.Cryptography.AesGcm` from the BCL.
-- 256-bit key derived from the configured secret via PBKDF2 (or use raw 32-byte key if supplied).
-- 12-byte random nonce per value.
+- 256-bit key (see §2 "Key material" below).
+- 12-byte random nonce per value (`RandomNumberGenerator.GetBytes(12)`).
 - 16-byte authentication tag verifies integrity (wrong key / tampered value → `AuthenticationTagMismatchException`, never silent garbage).
 - Per-value encryption (not per-file), matching the current DES behavior and `IConfiguration` semantics.
 
-### 2. Wire format — versioned ciphertext
+### 2. Key material — raw 32-byte key, Base64 in env var
+
+The encryption key is **32 random bytes**, stored Base64-encoded in an environment variable (default `ASPNETCORE_ENCODEKEY`, matching today's convention):
+
+```
+ASPNETCORE_ENCODEKEY=yK3vM9pQ+L2nR5sT8wXaB1cD4eF7gH0iJ2kL3mN4oP8=
+```
+
+**Generation — new CLI command `vconfig keygen`:**
+
+```bash
+vconfig keygen
+# → yK3vM9pQ+L2nR5sT8wXaB1cD4eF7gH0iJ2kL3mN4oP8=
+#
+# Save this value in ASPNETCORE_ENCODEKEY.
+# Anyone with this key can decrypt your configuration.
+```
+
+Implementation is trivial:
+
+```csharp
+var bytes = RandomNumberGenerator.GetBytes(32);
+Console.WriteLine(Convert.ToBase64String(bytes));
+```
+
+**Startup validation** in `AesGcmCipherProvider`:
+- Decode Base64; fail fast with `EncryptionException` on invalid Base64.
+- Require decoded length == 32 bytes; fail with a clear message pointing at `vconfig keygen`.
+
+**No PBKDF2 / password derivation.** Alternatives considered and rejected:
+
+1. *Accept any string; derive key via PBKDF2 with constant salt.* Rejected — constant salt defeats the purpose; an attacker can precompute a rainbow table once per deployment.
+2. *PBKDF2 with per-value salt prepended to ciphertext.* Rejected — adds wire-format complexity and noticeable startup cost (50+ values × 100k iterations each). If we already need a proper wire format, we may as well require a real key.
+3. *Accept weak passwords and "upgrade" them via PBKDF2.* Rejected — gives a false sense of security. PBKDF2 on `password123` is still guessable; the UX suggests otherwise.
+
+Industry practice for symmetric-at-rest keys is a random high-entropy key from a KMS / vault / env var, not a password-derived key. Voyager follows that.
+
+**DES → AES key migration.** The legacy DES key (8-byte, often derived from an arbitrary string password) **cannot be reused** as an AES-256 key. Users generate a new key and re-encrypt:
+
+```bash
+# 1. Generate new AES key
+export ASPNETCORE_AES_KEY=$(vconfig keygen)
+
+# 2. Re-encrypt: old DES key decrypts, new AES key encrypts
+vconfig reencrypt \
+  --input config/secrets.json \
+  --legacy-key-env ASPNETCORE_ENCODEKEY \
+  --new-key-env ASPNETCORE_AES_KEY
+
+# 3. Swap env vars in deployment (AES_KEY → ENCODEKEY)
+# 4. Remove old DES key from secret manager / vault
+```
+
+The `reencrypt` command therefore accepts **two** key env vars during migration; steady-state deployments still use a single `ASPNETCORE_ENCODEKEY`.
+
+### 3. Wire format — versioned ciphertext
 
 Every AES-encrypted value carries an explicit version prefix:
 
@@ -50,7 +105,7 @@ v2:BASE64(nonce || ciphertext || tag)
 
 Values without a prefix are treated as **legacy DES ciphertext**. This makes algorithm dispatch **deterministic** — no try/catch guessing, no risk of DES-CBC returning silent garbage for an AES ciphertext.
 
-### 3. Dual-mode read, single-mode write
+### 4. Dual-mode read, single-mode write
 
 A new `VersionedEncryptor : IEncryptor` routes on the prefix:
 
@@ -74,7 +129,7 @@ public string Encrypt(string value) => _aes.Encrypt(value);   // always AES
 - **Writes:** always AES. This guarantees the plaintext surface shrinks monotonically — a legacy file re-saved after any edit is fully migrated.
 - **Mixed files supported** during migration — a file can contain both `v2:...` and legacy values.
 
-### 4. Migration tooling
+### 5. Migration tooling
 
 New CLI command `vconfig reencrypt`:
 
@@ -87,11 +142,11 @@ vconfig reencrypt --input config/secrets.json
 - Leaves already-AES values untouched (idempotent).
 - Supports `--dry-run` and reports count of migrated values.
 
-### 5. Remove SOPS-migration messaging
+### 6. Remove SOPS-migration messaging
 
 SOPS stays **supported as an option** (nothing stops users from integrating it), but is no longer the recommended default. The tool stops nudging users toward it.
 
-### 6. Re-promote encryption to a first-class feature in docs
+### 7. Re-promote encryption to a first-class feature in docs
 
 Encryption usage was deliberately under-documented in the README while the team believed it was being deprecated. This gets reversed.
 
@@ -141,37 +196,38 @@ Encryption usage was deliberately under-documented in the README while the team 
 
 ### Phase 2 — Migration tooling (v2.next)
 
-6. Implement `vconfig reencrypt` command (accepts DES + AES on read, writes AES).
-7. Add `--dry-run` and summary output.
-8. Integration tests against fixtures containing pure-DES, pure-AES, and mixed files.
+6. Implement `vconfig keygen` command — emits a fresh Base64-encoded 32-byte key via `RandomNumberGenerator.GetBytes(32)`.
+7. Implement `vconfig reencrypt` command (accepts DES + AES on read, writes AES; accepts `--legacy-key-env` and `--new-key-env`).
+8. Add `--dry-run` and summary output.
+9. Integration tests against fixtures containing pure-DES, pure-AES, and mixed files.
 
 ### Phase 3 — De-deprecation and documentation (v2.next)
 
-9. **Remove deprecation warnings:**
+10. **Remove deprecation warnings:**
     - Delete `ShowDeprecationWarning()` in [Program.cs:250-260](../../src/Voyager.Configuration.Tool/Program.cs#L250-L260).
     - Remove `⚠️ WARNING: Built-in encryption is DEPRECATED` banner from `vconfig encrypt`.
     - Remove the "You can now encrypt this file with SOPS" hint from `vconfig decrypt`. Replace with a neutral message.
     - Remove `[Obsolete]` attribute from public encryption types; **keep** `[Obsolete]` on `LegacyDesCipherProvider` only.
     - Update `Voyager.Configuration.Tool.csproj` and `Voyager.Configuration.MountPath.csproj` — remove any package-level `<PackageTags>deprecated</PackageTags>` or similar.
-10. **Add encryption documentation to README.md:**
+11. **Add encryption documentation to README.md:**
     - New section "Encrypting configuration" (placed prominently, not buried).
     - Quickstart: key generation, env var setup, `vconfig encrypt` example, runtime `AddEncryptedMountConfiguration` example.
     - Threat model note: why in-memory decryption matters (AI-agent / indexer / backup exposure).
     - Link to AES-vs-SOPS comparison for users deciding.
     - Migration section for DES users: one-liner `vconfig reencrypt`.
-11. Update [MIGRATION.md](../MIGRATION.md) — remove the SOPS-only migration section; add a DES→AES section.
-12. Update [ROADMAP.md](../ROADMAP.md) — remove "Deprecate encryption features" task; add AES-GCM implementation task.
-13. Update samples: rename `samples/MigrationToSops/` to `samples/MigrationFromDes/` (or add new sample alongside).
+12. Update [MIGRATION.md](../MIGRATION.md) — remove the SOPS-only migration section; add a DES→AES section.
+13. Update [ROADMAP.md](../ROADMAP.md) — remove "Deprecate encryption features" task; add AES-GCM implementation task.
+14. Update samples: rename `samples/MigrationToSops/` to `samples/MigrationFromDes/` (or add new sample alongside).
 
 ### Phase 4 — Staged legacy removal
 
-14. **v3.x:** change `AllowLegacyDes` default to `false`. Runtime logs a clear migration command when disabled config encounters DES ciphertext. Announce in CHANGELOG one version ahead.
-15. **v4.x:** remove `LegacyDesCipherProvider` and related DES code paths entirely.
+15. **v3.x:** change `AllowLegacyDes` default to `false`. Runtime logs a clear migration command when disabled config encounters DES ciphertext. Announce in CHANGELOG one version ahead.
+16. **v4.x:** remove `LegacyDesCipherProvider` and related DES code paths entirely.
 
 ### Phase 5 — ADR housekeeping
 
-16. Update [ADR-003](ADR-003-encryption-delegation-to-external-tools.md) status to **Superseded by ADR-009** (only the "deprecate built-in encryption" conclusion is superseded; SOPS-as-option remains documented).
-17. Add ADR-009 to [ADR index](README.md).
+17. Update [ADR-003](ADR-003-encryption-delegation-to-external-tools.md) status to **Superseded by ADR-010** (only the "deprecate built-in encryption" conclusion is superseded; SOPS-as-option remains documented).
+18. Add ADR-010 to [ADR index](README.md).
 
 ## References
 

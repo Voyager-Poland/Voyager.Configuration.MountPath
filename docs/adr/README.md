@@ -36,7 +36,7 @@ Each ADR follows this structure:
 | [ADR-006](ADR-006-custom-exception-types-and-error-handling.md) | Custom Exception Types and Error Handling | Accepted | 2026-02-07 |
 | [ADR-007](ADR-007-requirements-alignment-with-infrastructure-library.md) | Aktualizacja wymagań dla biblioteki infrastrukturalnej | Proposed | 2026-02-10 |
 | [ADR-008](ADR-008-encrypting-non-string-json-values.md) | Encrypting Non-String JSON Values (Numbers, Booleans, Null) | Accepted | 2026-04-15 |
-| [ADR-009](ADR-009-aes-gcm-with-versioned-ciphertext.md) | AES-256-GCM Encryption with Versioned Ciphertext and Legacy DES Fallback | Proposed | 2026-04-15 |
+| [ADR-010](ADR-010-aes-gcm-with-versioned-ciphertext.md) | AES-256-GCM Encryption with Versioned Ciphertext and Legacy DES Fallback | Proposed | 2026-04-15 |
 
 ## Creating a New ADR
 

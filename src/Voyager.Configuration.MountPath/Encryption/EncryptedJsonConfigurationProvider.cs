@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -117,15 +118,26 @@ namespace Voyager.Configuration.MountPath.Encryption
 		/// <inheritdoc />
 		public override void Load(Stream stream)
 		{
-			base.Load(stream);
+			// Buffer the stream so we can parse it twice:
+			// once to identify non-string JSON keys, once for the base JSON loader.
+			using var ms = new MemoryStream();
+			stream.CopyTo(ms);
+			ms.Position = 0;
 
-			// Decrypt all configuration values
+			// Identify keys whose JSON values are not strings (numbers, booleans, null).
+			// These were never encrypted by the encryption tool and must not be decrypted.
+			var nonStringKeys = GetNonStringJsonKeys(ms.GetBuffer(), (int)ms.Length);
+
+			ms.Position = 0;
+			base.Load(ms);
+
+			// Decrypt all configuration values that originated from JSON string nodes
 			try
 			{
 				foreach (string key in Data.Keys)
 				{
 					var value = Data[key];
-					if (value != null)
+					if (value != null && !nonStringKeys.Contains(key))
 					{
 						try
 						{
@@ -166,6 +178,64 @@ namespace Voyager.Configuration.MountPath.Encryption
 					Path.GetFileName(_source.Path),
 					null,
 					ex);
+			}
+		}
+
+		/// <summary>
+		/// Parses the JSON content and collects the configuration paths of all leaf values
+		/// that are NOT strings (i.e. numbers, booleans, or null). These values are stored
+		/// verbatim by <see cref="Microsoft.Extensions.Configuration.Json.JsonConfigurationProvider"/>
+		/// and must not be passed through decryption.
+		/// </summary>
+		private static HashSet<string> GetNonStringJsonKeys(byte[] jsonBytes, int length)
+		{
+			var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				using var document = JsonDocument.Parse(new ReadOnlyMemory<byte>(jsonBytes, 0, length));
+				CollectNonStringKeys(document.RootElement, string.Empty, keys);
+			}
+			catch (JsonException)
+			{
+				// If the JSON is invalid, let base.Load handle and report the error.
+			}
+			return keys;
+		}
+
+		private static void CollectNonStringKeys(JsonElement element, string prefix, HashSet<string> keys)
+		{
+			switch (element.ValueKind)
+			{
+				case JsonValueKind.Object:
+					foreach (var property in element.EnumerateObject())
+					{
+						var path = string.IsNullOrEmpty(prefix)
+							? property.Name
+							: $"{prefix}:{property.Name}";
+						CollectNonStringKeys(property.Value, path, keys);
+					}
+					break;
+
+				case JsonValueKind.Array:
+					var index = 0;
+					foreach (var item in element.EnumerateArray())
+					{
+						CollectNonStringKeys(item, $"{prefix}:{index}", keys);
+						index++;
+					}
+					break;
+
+				case JsonValueKind.String:
+					// String values are candidates for decryption – do not add to the skip-set.
+					break;
+
+				default:
+					// Number, Boolean, Null – never encrypted, skip decryption.
+					if (!string.IsNullOrEmpty(prefix))
+					{
+						keys.Add(prefix);
+					}
+					break;
 			}
 		}
 

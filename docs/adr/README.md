@@ -29,9 +29,12 @@ Each ADR follows this structure:
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [ADR-001](ADR-001-extension-methods-organization.md) | Organization of Configuration Extension Methods | Accepted | 2026-02-06 |
-| ADR-002 | Encryption Algorithm Selection (DES → AES-256-GCM) | Planned | - |
-| ADR-003 | Configuration Structure (mount paths, file naming) | Planned | - |
-| ADR-004 | Versioning Strategy (SemVer, breaking changes) | Planned | - |
+| [ADR-002](ADR-002-settings-builder-pattern.md) | Settings Builder Pattern | Accepted | 2026-02-06 |
+| [ADR-003](ADR-003-encryption-delegation-to-external-tools.md) | Encryption Delegation to External Tools | Accepted | 2026-02-07 |
+| [ADR-004](ADR-004-cli-tool-for-configuration-encryption.md) | CLI Tool for Configuration Encryption | Accepted | 2026-02-07 |
+| [ADR-005](ADR-005-async-configuration-loading.md) | Async Configuration Loading | Accepted | 2026-02-07 |
+| [ADR-006](ADR-006-custom-exception-types-and-error-handling.md) | Custom Exception Types and Error Handling | Accepted | 2026-02-07 |
+| [ADR-007](ADR-007-requirements-alignment-with-infrastructure-library.md) | Aktualizacja wymagań dla biblioteki infrastrukturalnej | Proposed | 2026-02-10 |
 
 ## Creating a New ADR
 

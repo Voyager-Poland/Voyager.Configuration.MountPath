@@ -133,12 +133,13 @@ public void ValidateEmail_WithInvalidFormat_ThrowsValidationException()
 ## Nazewnictwo w programowaniu wielowątkowym
 
 1. **Dodawaj odpowiednie sufiksy i prefiksy wskazujące na współbieżność**
-   - Używaj sufiksów `Async` dla metod asynchronicznych
+   - Używaj sufiksów `Async` dla metod asynchronicznych — dotyczy **zarówno metod publicznych, jak i prywatnych**
    - Dodawaj `Task` do nazw metod zwracających `Task` lub `Task<T>`
    - Używaj prefiksu `Concurrent` dla kolekcji bezpiecznych wątkowo
 
 ```csharp
 public async Task<Result> ProcessPaymentAsync()
+private async Task<T> PostForAsync<T>(string endpoint, object content)  // prywatne też z Async
 public Task<User> GetUserByIdTaskAsync(int userId)
 ConcurrentDictionary<string, User> activeUsers;
 ```

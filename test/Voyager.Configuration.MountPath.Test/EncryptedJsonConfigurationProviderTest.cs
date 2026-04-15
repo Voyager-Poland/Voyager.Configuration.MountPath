@@ -1,4 +1,4 @@
-﻿using Voyager.Configuration.MountPath.Encryption;
+using Voyager.Configuration.MountPath.Encryption;
 
 namespace Voyager.Configuration.MountPath.Test
 {
@@ -58,6 +58,43 @@ namespace Voyager.Configuration.MountPath.Test
       providerWithNumbers.TryGet("MyTemplate:Name", out var nameValue);
       providerWithNumbers.TryGet("MyTemplate:IsActive", out var isActiveValue);
       providerWithNumbers.TryGet("MyTemplate:Score", out var scoreValue);
+
+      Assert.That(idValue, Is.EqualTo("77"));
+      Assert.That(nameValue, Is.EqualTo("tekst to encode może jednak ma być dłuższy"));
+      Assert.That(isActiveValue, Is.EqualTo("True"));
+      Assert.That(scoreValue, Is.EqualTo("3.14"));
+    }
+
+    [Test]
+    public void DecodeJson_WithEncryptedNumericValues_DoesNotThrow()
+    {
+      var source = new EncryptedJsonConfigurationSource()
+      {
+        Key = "PowaznyTestks123456722228",
+        Path = Path.Combine(Directory.GetCurrentDirectory(), "config", "encoded_with_encrypted_numbers.json")
+      };
+      source.ResolveFileProvider();
+      var providerWithEncryptedNumbers = new EncryptedJsonConfigurationProvider(source);
+
+      Assert.DoesNotThrow(() => providerWithEncryptedNumbers.Load());
+    }
+
+    [Test]
+    public void DecodeJson_WithEncryptedNumericValues_ReturnsDecryptedValuesAsString()
+    {
+      var source = new EncryptedJsonConfigurationSource()
+      {
+        Key = "PowaznyTestks123456722228",
+        Path = Path.Combine(Directory.GetCurrentDirectory(), "config", "encoded_with_encrypted_numbers.json")
+      };
+      source.ResolveFileProvider();
+      var providerWithEncryptedNumbers = new EncryptedJsonConfigurationProvider(source);
+      providerWithEncryptedNumbers.Load();
+
+      providerWithEncryptedNumbers.TryGet("MyTemplate:IdTemplate", out var idValue);
+      providerWithEncryptedNumbers.TryGet("MyTemplate:Name", out var nameValue);
+      providerWithEncryptedNumbers.TryGet("MyTemplate:IsActive", out var isActiveValue);
+      providerWithEncryptedNumbers.TryGet("MyTemplate:Score", out var scoreValue);
 
       Assert.That(idValue, Is.EqualTo("77"));
       Assert.That(nameValue, Is.EqualTo("tekst to encode może jednak ma być dłuższy"));

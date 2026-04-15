@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Voyager.Configuration.MountPath.Encryption;
@@ -263,12 +263,34 @@ static JsonNode EncryptJsonNode(JsonNode node, IEncryptor encryptor)
 {
     if (node is JsonValue value)
     {
-        // Encrypt only string values
-        if (value.TryGetValue<string>(out var str))
+        var kind = value.GetValueKind();
+        string? plainText = null;
+
+        if (kind == JsonValueKind.String)
         {
-            return JsonValue.Create(encryptor.Encrypt(str));
+            value.TryGetValue<string>(out plainText);
         }
-        // Numbers, booleans remain unchanged
+        else if (kind == JsonValueKind.True)
+        {
+            // Match the string representation stored by JsonConfigurationFileParser
+            plainText = "True";
+        }
+        else if (kind == JsonValueKind.False)
+        {
+            plainText = "False";
+        }
+        else if (kind == JsonValueKind.Number)
+        {
+            // Use the raw JSON text to preserve exact numeric representation
+            plainText = value.ToJsonString();
+        }
+        // JsonValueKind.Null remains null (no encryption)
+
+        if (plainText != null)
+        {
+            var encrypted = encryptor.Encrypt(plainText);
+            return JsonValue.Create(encrypted)!;
+        }
         return value.DeepClone();
     }
     else if (node is JsonObject obj)

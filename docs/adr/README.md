@@ -32,6 +32,7 @@ Each ADR follows this structure:
 | ADR-002 | Encryption Algorithm Selection (DES → AES-256-GCM) | Planned | - |
 | ADR-003 | Configuration Structure (mount paths, file naming) | Planned | - |
 | ADR-004 | Versioning Strategy (SemVer, breaking changes) | Planned | - |
+| [ADR-008](ADR-008-encrypting-non-string-json-values.md) | Encrypting Non-String JSON Values (Numbers, Booleans, Null) | Accepted | 2026-04-15 |
 
 ## Creating a New ADR
 

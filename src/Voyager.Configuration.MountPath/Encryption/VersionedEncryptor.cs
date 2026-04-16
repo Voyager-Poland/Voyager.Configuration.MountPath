@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Voyager.Configuration.MountPath.Encryption
 {
@@ -23,7 +24,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 		private readonly IEncryptor? _legacyDes;
 		private readonly bool _allowLegacyDes;
 		private readonly Action<string>? _warningLogger;
-		private bool _legacyWarningEmitted;
+		private int _legacyWarningEmitted;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VersionedEncryptor"/> class.
@@ -101,9 +102,10 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 		private void EmitLegacyWarningOnce()
 		{
-			if (_legacyWarningEmitted)
+			// Atomically flip 0→1 exactly once. Concurrent Decrypt callers lose the race
+			// and return without emitting a duplicate warning.
+			if (Interlocked.CompareExchange(ref _legacyWarningEmitted, 1, 0) != 0)
 				return;
-			_legacyWarningEmitted = true;
 
 			const string message =
 				"Decrypting legacy DES-encrypted configuration value. " +

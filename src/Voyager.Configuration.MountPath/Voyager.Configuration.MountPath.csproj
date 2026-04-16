@@ -69,4 +69,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- AES-GCM polyfill for .NET Framework 4.8 (BCL AesGcm is unavailable there) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+  </ItemGroup>
+
 </Project>

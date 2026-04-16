@@ -1,6 +1,12 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
+#if NET48
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Parameters;
+#endif
 
 namespace Voyager.Configuration.MountPath.Encryption
 {
@@ -10,9 +16,11 @@ namespace Voyager.Configuration.MountPath.Encryption
 	/// <c>nonce || ciphertext || tag</c> (tag is 16 bytes).
 	/// </summary>
 	/// <remarks>
-	/// Requires a 32-byte key supplied as Base64. On .NET Framework 4.8 the
-	/// constructor throws <see cref="PlatformNotSupportedException"/> — AES-GCM
-	/// is not available in the BCL there.
+	/// Requires a 32-byte key supplied as Base64. On .NET Core 3.1+ / .NET 6+
+	/// delegates to BCL <c>System.Security.Cryptography.AesGcm</c>; on
+	/// .NET Framework 4.8 delegates to BouncyCastle <c>GcmBlockCipher</c>.
+	/// Wire format is identical byte-for-byte across backends, so ciphertexts
+	/// are portable between TFMs.
 	/// </remarks>
 	public sealed class AesGcmCipherProvider : ICipherProvider
 	{
@@ -25,8 +33,10 @@ namespace Voyager.Configuration.MountPath.Encryption
 
 #if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 		private readonly AesGcm _aesGcm;
-		private bool _disposed;
+#else
+		private readonly byte[] _key;
 #endif
+		private bool _disposed;
 
 		/// <summary>
 		/// Initializes a new instance from a Base64-encoded 32-byte key.
@@ -34,7 +44,6 @@ namespace Voyager.Configuration.MountPath.Encryption
 		/// <param name="base64Key">Base64-encoded 256-bit key (e.g. from <c>vconfig keygen</c>).</param>
 		/// <exception cref="ArgumentNullException">Key is <c>null</c>.</exception>
 		/// <exception cref="EncryptionException">Key is not valid Base64 or is not 32 bytes.</exception>
-		/// <exception cref="PlatformNotSupportedException">Running on .NET Framework where <c>AesGcm</c> is unavailable.</exception>
 		public AesGcmCipherProvider(string base64Key)
 		{
 			if (base64Key == null)
@@ -47,9 +56,7 @@ namespace Voyager.Configuration.MountPath.Encryption
 #elif NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			_aesGcm = new AesGcm(keyBytes);
 #else
-			throw new PlatformNotSupportedException(
-				"AES-256-GCM is not supported on this target framework. " +
-				"Use .NET Core 3.1 or later (or .NET 6+) to enable AES-GCM encryption.");
+			_key = keyBytes;
 #endif
 		}
 
@@ -83,27 +90,27 @@ namespace Voyager.Configuration.MountPath.Encryption
 		{
 			if (plaintext == null)
 				throw new ArgumentNullException(nameof(plaintext));
-
-#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			ThrowIfDisposed();
 
 			var plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
-			var nonce = new byte[NonceSizeBytes];
-			RandomNumberGenerator.Fill(nonce);
+			var nonce = GenerateNonce();
+			var output = new byte[NonceSizeBytes + plaintextBytes.Length + TagSizeBytes];
+			Buffer.BlockCopy(nonce, 0, output, 0, NonceSizeBytes);
 
+#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			var ciphertext = new byte[plaintextBytes.Length];
 			var tag = new byte[TagSizeBytes];
-
 			_aesGcm.Encrypt(nonce, plaintextBytes, ciphertext, tag);
-
-			var output = new byte[NonceSizeBytes + ciphertext.Length + TagSizeBytes];
-			Buffer.BlockCopy(nonce, 0, output, 0, NonceSizeBytes);
 			Buffer.BlockCopy(ciphertext, 0, output, NonceSizeBytes, ciphertext.Length);
 			Buffer.BlockCopy(tag, 0, output, NonceSizeBytes + ciphertext.Length, TagSizeBytes);
-			return output;
 #else
-			throw new PlatformNotSupportedException("AES-256-GCM is not supported on this target framework.");
+			var cipher = CreateBouncyCastleCipher(forEncryption: true, nonce);
+			var buffer = new byte[cipher.GetOutputSize(plaintextBytes.Length)];
+			var written = cipher.ProcessBytes(plaintextBytes, 0, plaintextBytes.Length, buffer, 0);
+			cipher.DoFinal(buffer, written);
+			Buffer.BlockCopy(buffer, 0, output, NonceSizeBytes, buffer.Length);
 #endif
+			return output;
 		}
 
 		/// <inheritdoc />
@@ -111,8 +118,6 @@ namespace Voyager.Configuration.MountPath.Encryption
 		{
 			if (encryptedData == null)
 				throw new ArgumentNullException(nameof(encryptedData));
-
-#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			ThrowIfDisposed();
 
 			if (encryptedData.Length < NonceSizeBytes + TagSizeBytes)
@@ -123,41 +128,79 @@ namespace Voyager.Configuration.MountPath.Encryption
 			}
 
 			var ciphertextLength = encryptedData.Length - NonceSizeBytes - TagSizeBytes;
-
 			var nonce = new byte[NonceSizeBytes];
+			Buffer.BlockCopy(encryptedData, 0, nonce, 0, NonceSizeBytes);
+
+#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			var ciphertext = new byte[ciphertextLength];
 			var tag = new byte[TagSizeBytes];
-
-			Buffer.BlockCopy(encryptedData, 0, nonce, 0, NonceSizeBytes);
 			Buffer.BlockCopy(encryptedData, NonceSizeBytes, ciphertext, 0, ciphertextLength);
 			Buffer.BlockCopy(encryptedData, NonceSizeBytes + ciphertextLength, tag, 0, TagSizeBytes);
 
 			var plaintextBytes = new byte[ciphertextLength];
 			_aesGcm.Decrypt(nonce, ciphertext, tag, plaintextBytes);
-
 			return Encoding.UTF8.GetString(plaintextBytes);
 #else
-			throw new PlatformNotSupportedException("AES-256-GCM is not supported on this target framework.");
+			var input = new byte[ciphertextLength + TagSizeBytes];
+			Buffer.BlockCopy(encryptedData, NonceSizeBytes, input, 0, input.Length);
+
+			var cipher = CreateBouncyCastleCipher(forEncryption: false, nonce);
+			var buffer = new byte[cipher.GetOutputSize(input.Length)];
+			int written;
+			try
+			{
+				written = cipher.ProcessBytes(input, 0, input.Length, buffer, 0);
+				written += cipher.DoFinal(buffer, written);
+			}
+			catch (InvalidCipherTextException ex)
+			{
+				// Wrong key or tampered payload — surface as the standard BCL exception type
+				// so callers can uniformly catch CryptographicException regardless of backend.
+				throw new CryptographicException("The computed authentication tag did not match the input authentication tag.", ex);
+			}
+
+			return Encoding.UTF8.GetString(buffer, 0, written);
 #endif
 		}
 
+		private static byte[] GenerateNonce()
+		{
+			var nonce = new byte[NonceSizeBytes];
 #if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
+			RandomNumberGenerator.Fill(nonce);
+#else
+			using (var rng = RandomNumberGenerator.Create())
+				rng.GetBytes(nonce);
+#endif
+			return nonce;
+		}
+
+#if NET48
+		private GcmBlockCipher CreateBouncyCastleCipher(bool forEncryption, byte[] nonce)
+		{
+			var cipher = new GcmBlockCipher(new AesEngine());
+			cipher.Init(forEncryption, new AeadParameters(new KeyParameter(_key), TagSizeBytes * 8, nonce));
+			return cipher;
+		}
+#endif
+
 		private void ThrowIfDisposed()
 		{
 			if (_disposed)
 				throw new ObjectDisposedException(nameof(AesGcmCipherProvider));
 		}
-#endif
 
 		/// <inheritdoc />
 		public void Dispose()
 		{
-#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			if (_disposed)
 				return;
+#if NETCOREAPP3_1_OR_GREATER || NET6_0_OR_GREATER
 			_aesGcm?.Dispose();
-			_disposed = true;
+#else
+			Array.Clear(_key, 0, _key.Length);
 #endif
+			_disposed = true;
 		}
 	}
 }

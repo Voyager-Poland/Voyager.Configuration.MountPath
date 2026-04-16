@@ -170,5 +170,20 @@ namespace Voyager.Configuration.MountPath.Test
 
 			Assert.Throws<ArgumentNullException>(() => encryptor.Decrypt(null!));
 		}
+
+		[Test]
+		public void Decrypt_ConcurrentLegacyReads_EmitsWarningExactlyOnce()
+		{
+			var warnings = new System.Collections.Concurrent.ConcurrentBag<string>();
+			using var encryptor = NewEncryptor(warningLogger: warnings.Add);
+			var legacyEncryptor = new Encryptor(LegacyDesKey);
+			var legacyCiphertexts = Enumerable.Range(0, 64)
+				.Select(i => legacyEncryptor.Encrypt("payload-" + i))
+				.ToArray();
+
+			Parallel.ForEach(legacyCiphertexts, ct => encryptor.Decrypt(ct));
+
+			Assert.That(warnings, Has.Count.EqualTo(1));
+		}
 	}
 }

@@ -60,10 +60,9 @@ namespace Voyager.Configuration.MountPath.Encryption
 			}
 			catch (EncryptionException)
 			{
-				return null;
-			}
-			catch (PlatformNotSupportedException)
-			{
+				// Key is not AES-shaped (invalid Base64 or wrong length).
+				// Any other exception (e.g. CryptographicException, PlatformNotSupportedException)
+				// indicates a real crypto problem and must not be silently downgraded to DES.
 				return null;
 			}
 		}

@@ -64,5 +64,50 @@ namespace Voyager.Configuration.MountPath.Test
       Assert.That(isActiveValue, Is.EqualTo("True"));
       Assert.That(scoreValue, Is.EqualTo("3.14"));
     }
+
+    [Test]
+    public void DecodeJson_MixedTypesWithEncryptedString_PreservesValues()
+    {
+      const string key = "PowaznyTestks123456722228";
+      var encryptor = new Encryptor(key);
+      var encryptedHaslo = encryptor.Encrypt("Ukrtyte");
+
+      var encryptedJson = $$"""
+        {
+          "MyTemplate": {
+            "IdTemplate": 77,
+            "haslo": "{{encryptedHaslo}}",
+            "logowanie": false
+          }
+        }
+        """;
+
+      var tempPath = Path.Combine(Path.GetTempPath(), $"encrypt_roundtrip_{Guid.NewGuid():N}.json");
+      File.WriteAllText(tempPath, encryptedJson);
+
+      try
+      {
+        var source = new EncryptedJsonConfigurationSource { Key = key, Path = tempPath };
+        source.ResolveFileProvider();
+        var mixedProvider = new EncryptedJsonConfigurationProvider(source);
+        mixedProvider.Load();
+
+        mixedProvider.TryGet("MyTemplate:IdTemplate", out var idValue);
+        mixedProvider.TryGet("MyTemplate:haslo", out var hasloValue);
+        mixedProvider.TryGet("MyTemplate:logowanie", out var logowanieValue);
+
+        Assert.Multiple(() =>
+        {
+          Assert.That(idValue, Is.EqualTo("77"));
+          Assert.That(hasloValue, Is.EqualTo("Ukrtyte"));
+          Assert.That(logowanieValue, Is.EqualTo("False"));
+        });
+      }
+      finally
+      {
+        if (File.Exists(tempPath))
+          File.Delete(tempPath);
+      }
+    }
   }
 }

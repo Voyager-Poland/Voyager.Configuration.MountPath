@@ -169,6 +169,46 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
+		public void Reencrypt_MixedWithPlaintext_PlaintextLeftUntouched()
+		{
+			var desKey = "LegacyDesKey12345678";
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+			var desEncryptor = new Encryptor(desKey);
+			using var aesCipher = new AesGcmCipherProvider(aesKey);
+			using var aesWriter = new VersionedEncryptor(aesCipher, null, allowLegacyDes: false);
+
+			var json = new JsonObject
+			{
+				["host"] = "localhost",
+				["port"] = 5432,
+				["password"] = desEncryptor.Encrypt("db-secret"),
+				["apiKey"] = aesWriter.Encrypt("modern-key"),
+				["description"] = "Production database",
+				["enabled"] = true
+			};
+			var inputPath = Path.Combine(_tempDir, "mixed-plaintext.json");
+			File.WriteAllText(inputPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+			var (exitCode, stdout, _) = RunVconfig(
+				$"reencrypt --input \"{inputPath}\" --legacy-key-env TEST_DES --new-key-env TEST_AES",
+				new Dictionary<string, string> { ["TEST_DES"] = desKey, ["TEST_AES"] = aesKey });
+
+			Assert.That(exitCode, Is.EqualTo(0));
+			Assert.That(stdout, Does.Contain("1 value(s) migrated"));
+
+			var result = JsonNode.Parse(File.ReadAllText(inputPath))!.AsObject();
+			Assert.That(result["host"]!.GetValue<string>(), Is.EqualTo("localhost"));
+			Assert.That(result["port"]!.GetValue<int>(), Is.EqualTo(5432));
+			Assert.That(result["password"]!.GetValue<string>(), Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(result["apiKey"]!.GetValue<string>(), Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(result["description"]!.GetValue<string>(), Is.EqualTo("Production database"));
+			Assert.That(result["enabled"]!.GetValue<bool>(), Is.True);
+
+			using var reader = new VersionedEncryptor(new AesGcmCipherProvider(aesKey), null, allowLegacyDes: false);
+			Assert.That(reader.Decrypt(result["password"]!.GetValue<string>()), Is.EqualTo("db-secret"));
+		}
+
+		[Test]
 		public void Reencrypt_DryRun_FileUnchanged()
 		{
 			var desKey = "LegacyDesKey12345678";

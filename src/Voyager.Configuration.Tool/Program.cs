@@ -283,9 +283,10 @@ reencryptCommand.SetHandler(async (FileInfo input, string legacyKeyEnv, string n
 
         var legacyEncryptor = new Encryptor(legacyKey);
         using var aesCipher = new AesGcmCipherProvider(newKey);
-        using var reader = new VersionedEncryptor(
+        // aesCipher owns the lifecycle — reader/writer borrow it, don't dispose it
+        var reader = new VersionedEncryptor(
             aesCipher, legacyEncryptor, allowLegacyDes: true);
-        using var writer = new VersionedEncryptor(
+        var writer = new VersionedEncryptor(
             aesCipher, legacyDes: null, allowLegacyDes: false);
 
         var jsonText = await File.ReadAllTextAsync(input.FullName);

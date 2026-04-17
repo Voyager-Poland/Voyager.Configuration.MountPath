@@ -34,7 +34,7 @@ namespace Voyager.Configuration.MountPath.Test
 			var psi = new ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"run --project \"{ToolProject}\" -- {arguments}",
+				Arguments = $"run --no-build --project \"{ToolProject}\" -- {arguments}",
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				UseShellExecute = false,
@@ -130,8 +130,8 @@ namespace Voyager.Configuration.MountPath.Test
 				new Dictionary<string, string> { ["TEST_DES"] = "DummyDesKey12345", ["TEST_AES"] = aesKey });
 
 			Assert.That(exitCode, Is.EqualTo(0));
-			Assert.That(stdout, Does.Contain("0 value(s) migrated"));
-			Assert.That(stdout, Does.Contain("1 already AES"));
+			Assert.That(stdout, Does.Contain("Nothing to migrate"));
+			Assert.That(stdout, Does.Contain("1 value(s) already AES"));
 			Assert.That(File.ReadAllText(inputPath), Is.EqualTo(originalContent));
 		}
 

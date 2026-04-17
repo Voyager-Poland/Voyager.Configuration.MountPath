@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Voyager.Configuration.MountPath;
 using Voyager.Configuration.MountPath.Encryption;
 
 // Root command
@@ -283,7 +284,7 @@ reencryptCommand.SetHandler(async (FileInfo input, string legacyKeyEnv, string n
         var legacyEncryptor = new Encryptor(legacyKey);
         using var aesCipher = new AesGcmCipherProvider(newKey);
         using var reader = new VersionedEncryptor(
-            new AesGcmCipherProvider(newKey), legacyEncryptor, allowLegacyDes: true);
+            aesCipher, legacyEncryptor, allowLegacyDes: true);
         using var writer = new VersionedEncryptor(
             aesCipher, legacyDes: null, allowLegacyDes: false);
 
@@ -302,11 +303,15 @@ reencryptCommand.SetHandler(async (FileInfo input, string legacyKeyEnv, string n
         {
             Console.WriteLine($"Dry run: {migrated} value(s) would be migrated, {alreadyAes} already AES, {total} total.");
         }
-        else
+        else if (migrated > 0)
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
             await File.WriteAllTextAsync(input.FullName, result.ToJsonString(options));
             Console.WriteLine($"Re-encrypted {input.FullName}: {migrated} value(s) migrated, {alreadyAes} already AES, {total} total.");
+        }
+        else
+        {
+            Console.WriteLine($"Nothing to migrate: {alreadyAes} value(s) already AES, {total} total.");
         }
     }
     catch (Exception ex)
@@ -444,15 +449,27 @@ static JsonNode ReencryptJsonNode(
     {
         if (value.TryGetValue<string>(out var str))
         {
-            total++;
             if (str.StartsWith(VersionedEncryptor.V2Prefix, StringComparison.Ordinal))
             {
+                total++;
                 alreadyAes++;
                 return value.DeepClone();
             }
-            var plaintext = reader.Decrypt(str);
-            migrated++;
-            return JsonValue.Create(writer.Encrypt(plaintext));
+            try
+            {
+                var plaintext = reader.Decrypt(str);
+                total++;
+                migrated++;
+                return JsonValue.Create(writer.Encrypt(plaintext));
+            }
+            catch (Exception ex) when (
+                ex is FormatException ||
+                ex is System.Security.Cryptography.CryptographicException ||
+                ex is EncryptionException)
+            {
+                // Not an encrypted value (plaintext string) — leave as-is
+                return value.DeepClone();
+            }
         }
         return value.DeepClone();
     }

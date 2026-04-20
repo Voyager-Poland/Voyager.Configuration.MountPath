@@ -63,10 +63,6 @@ vconfig reencrypt \
 - **v3.x**: `AllowLegacyDes=false` — DES wyłączony domyślnie
 - **v4.x**: Kod DES usunięty całkowicie
 
-## Alternatywa: SOPS
-
-Dla organizacji wymagających KMS, rotacji kluczy lub audit logu, [SOPS](https://github.com/mozilla/sops) pozostaje wspieraną opcją przez extension point `IEncryptor`. Zobacz [ADR-003](../../docs/adr/ADR-003-encryption-delegation-to-external-tools.md).
-
 ## Dokumentacja
 
 - [ADR-010: AES-256-GCM](../../docs/adr/ADR-010-aes-gcm-with-versioned-ciphertext.md) — pełna decyzja architektoniczna

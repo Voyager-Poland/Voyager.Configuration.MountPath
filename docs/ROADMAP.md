@@ -6,7 +6,7 @@ Ten dokument opisuje plan ulepszeń biblioteki Voyager.Configuration.MountPath, 
 
 > **ZMIANA STRATEGII (ADR-010):**
 > Wbudowane szyfrowanie zostało **zmodernizowane** z DES do AES-256-GCM (v2.3.0) zamiast deprecjonowane.
-> SOPS pozostaje obsługiwany jako alternatywa przez extension point `IEncryptor`.
+> Deszyfrowanie in-memory chroni dane wrażliwe przed agentami AI, indekserami IDE i backupami.
 > Zobacz [ADR-010](adr/ADR-010-aes-gcm-with-versioned-ciphertext.md).
 
 ---

@@ -77,8 +77,7 @@ vconfig reencrypt \
 - **v3.x** (planned): `AllowLegacyDes=false` — DES disabled by default, opt-in available
 - **v4.x** (planned): DES code removed entirely
 
-**Alternative: SOPS**
-For organizations requiring KMS integration, key rotation, or audit logging, [SOPS](https://github.com/mozilla/sops) remains a supported alternative via the `IEncryptor` extension point. See [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md).
+**Extension point:** The `IEncryptor` / `IEncryptorFactory` interfaces allow custom encryption implementations if your organization has specific requirements (KMS, key rotation, audit logging).
 
 ### Improvements in v2.0
 

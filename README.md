@@ -14,10 +14,7 @@ This library provides a simple way to organize JSON configuration files by **fil
 - **Mount at runtime**: Keep configuration outside container images using volume mounts
 - **Update without rebuilding**: Change configuration without rebuilding or redeploying
 
-> **⚠️ DEPRECATION NOTICE: Built-in Encryption**
-> The built-in encryption feature is **deprecated** and will be removed in **version 3.0**.
-> We recommend migrating to external secret management tools like **[Mozilla SOPS](https://github.com/mozilla/sops)**, Kubernetes Secrets, or cloud providers (Azure Key Vault, AWS Secrets Manager).
-> See [ADR-003: Encryption Delegation](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for migration guidance and rationale.
+> **Built-in AES-256-GCM encryption** — sensitive configuration values are decrypted in-memory at the `IConfiguration` level. Plaintext never touches disk, protecting secrets from AI agents, IDE indexers, and OS-level backups. See [Encrypting Configuration](#encrypting-configuration) below.
 
 ## Features
 
@@ -341,11 +338,13 @@ vconfig reencrypt --input config/secrets.json \
 
 See [ADR-010](docs/adr/ADR-010-aes-gcm-with-versioned-ciphertext.md) for the full encryption design, threat model, and migration plan.
 
-**Alternative: Mozilla SOPS**
-
-For organizations requiring KMS integration, key rotation, or audit logging, [SOPS](https://github.com/mozilla/sops) remains a supported option. The `IEncryptor` interface is an extension point — custom implementations can wrap SOPS or any other tool. See [ADR-003](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for details.
-
 ## Security Considerations
+
+### Why in-memory decryption matters
+
+Modern development environments include AI coding agents (Claude Code, Copilot, Cursor) with broad filesystem read access. A plaintext secrets file on disk is readable by agents, indexed by IDEs, captured by swap files and backups — without any audit trail.
+
+Voyager's approach: encrypted values in JSON files on disk, decrypted **in memory** at `IConfiguration` level. Plaintext never touches the filesystem. This is a stronger security property than tools that decrypt to disk (e.g. `sops -d file.json > plain.json`).
 
 ### Encryption — AES-256-GCM
 
@@ -360,7 +359,7 @@ For organizations requiring KMS integration, key rotation, or audit logging, [SO
 2. **File permissions**: Ensure configuration files have appropriate read permissions
 3. **Container security**: Mount configuration volumes as read-only (`:ro`)
 4. **Migration**: Run `vconfig reencrypt` to migrate legacy DES files to AES-256-GCM
-5. **For enterprise needs**: Consider SOPS + KMS for key rotation and audit logging via a custom `IEncryptor`
+5. **Extension point**: `IEncryptor` / `IEncryptorFactory` allow custom encryption implementations if needed
 
 ## Architecture
 
@@ -389,7 +388,7 @@ All extension methods are placed in the `Microsoft.Extensions.DependencyInjectio
 - **[Architecture Decision Records](docs/adr/)** - Architectural decisions and their rationale
   - [ADR-001: Extension Methods Organization](docs/adr/ADR-001-extension-methods-organization.md) - How extension methods are organized
   - [ADR-002: Settings Builder Pattern](docs/adr/ADR-002-settings-builder-pattern.md) - Why Action<Settings> over Builder Pattern
-  - [ADR-003: Encryption Delegation to External Tools](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) - **Migration guide from built-in encryption to SOPS**
+  - [ADR-003: Encryption Delegation to External Tools](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) - Superseded by ADR-010
 - **[ROADMAP](docs/ROADMAP.md)** - Planned improvements and feature roadmap
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
 

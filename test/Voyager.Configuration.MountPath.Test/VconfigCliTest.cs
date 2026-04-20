@@ -136,6 +136,45 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
+		public void Reencrypt_Base64LookingPlaintext_LeftUntouched()
+		{
+			var desKey = "LegacyDesKey12345678";
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+			var desEncryptor = new Encryptor(desKey);
+
+			// Encrypt "test" with a DIFFERENT DES key → valid Base64, valid DES structure,
+			// but decrypted with our key it produces garbage or throws.
+			var otherDesEncryptor = new Encryptor("OtherDesKey12345");
+			var wrongKeyCiphertext = otherDesEncryptor.Encrypt("test-value");
+
+			var json = new JsonObject
+			{
+				["secret"] = desEncryptor.Encrypt("real-secret"),
+				["base64Token"] = "SGVsbG8gV29ybGQ=",
+				["wrongKeyCipher"] = wrongKeyCiphertext,
+				["normalText"] = "just plain text"
+			};
+			var inputPath = Path.Combine(_tempDir, "base64-plaintext.json");
+			File.WriteAllText(inputPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+			var (exitCode, stdout, _) = RunVconfig(
+				$"reencrypt --input \"{inputPath}\" --legacy-key-env TEST_DES --new-key-env TEST_AES",
+				new Dictionary<string, string> { ["TEST_DES"] = desKey, ["TEST_AES"] = aesKey });
+
+			Assert.That(exitCode, Is.EqualTo(0));
+
+			var result = JsonNode.Parse(File.ReadAllText(inputPath))!.AsObject();
+			Assert.That(result["secret"]!.GetValue<string>(), Does.StartWith(VersionedEncryptor.V2Prefix),
+				"Real DES value should be migrated");
+			Assert.That(result["base64Token"]!.GetValue<string>(), Is.EqualTo("SGVsbG8gV29ybGQ="),
+				"Base64-looking plaintext must not be corrupted");
+			Assert.That(result["wrongKeyCipher"]!.GetValue<string>(), Is.EqualTo(wrongKeyCiphertext),
+				"DES ciphertext from wrong key must not be corrupted");
+			Assert.That(result["normalText"]!.GetValue<string>(), Is.EqualTo("just plain text"),
+				"Plain text must not be corrupted");
+		}
+
+		[Test]
 		public void Reencrypt_MixedFile_OnlyDesMigrated()
 		{
 			var desKey = "LegacyDesKey12345678";

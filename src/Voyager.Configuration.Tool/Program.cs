@@ -459,6 +459,11 @@ static JsonNode ReencryptJsonNode(
             try
             {
                 var plaintext = reader.Decrypt(str);
+                // DES-CBC has no authentication — wrong-key or non-ciphertext inputs
+                // can silently "decrypt" to garbage bytes. Encoding.UTF8.GetString
+                // replaces invalid sequences with U+FFFD, so that's our signal.
+                if (plaintext.Contains('\uFFFD'))
+                    return value.DeepClone();
                 total++;
                 migrated++;
                 return JsonValue.Create(writer.Encrypt(plaintext));
@@ -468,7 +473,6 @@ static JsonNode ReencryptJsonNode(
                 ex is System.Security.Cryptography.CryptographicException ||
                 ex is EncryptionException)
             {
-                // Not an encrypted value (plaintext string) — leave as-is
                 return value.DeepClone();
             }
         }

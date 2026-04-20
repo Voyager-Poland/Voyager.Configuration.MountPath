@@ -37,7 +37,7 @@
     <PackageIcon>voyager-nugets-ikona-128x128.png</PackageIcon>
     <PackAsTool>False</PackAsTool>
     <PackageTags>Kubernetes,Docker,Linux,JSON,Configuration,Environment,Conditional,SOLID,SRP,ASP.NET-Core</PackageTags>
-    <PackageReleaseNotes>v1.3.0: SRP refactoring - Extension methods split by responsibility (EncryptedMountConfigurationExtensions, EncryptedJsonFileExtensions). ConfigurationEncryptedExtension marked as obsolete. See ADR-001 for details.</PackageReleaseNotes>
+    <PackageReleaseNotes>v2.3.0: AES-256-GCM encryption (ADR-010) — replaces DES as default cipher. Versioned ciphertext format (v2: prefix), BouncyCastle polyfill for .NET Framework 4.8, backward-compatible DES reads. See CHANGELOG.md for details.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

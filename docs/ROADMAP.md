@@ -4,9 +4,10 @@
 
 Ten dokument opisuje plan ulepszeń biblioteki Voyager.Configuration.MountPath, mający na celu poprawę jakości kodu i użyteczności dla programistów.
 
-> **⚠️ WAŻNA ZMIANA STRATEGII**
-> Zgodnie z [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md), wbudowane szyfrowanie jest **deprecjonowane** i zostanie usunięte w wersji 3.0.
-> Zalecamy migrację do zewnętrznych narzędzi (SOPS, Kubernetes Secrets, Azure Key Vault).
+> **ZMIANA STRATEGII (ADR-010):**
+> Wbudowane szyfrowanie zostało **zmodernizowane** z DES do AES-256-GCM (v2.3.0) zamiast deprecjonowane.
+> SOPS pozostaje obsługiwany jako alternatywa przez extension point `IEncryptor`.
+> Zobacz [ADR-010](adr/ADR-010-aes-gcm-with-versioned-ciphertext.md).
 
 ---
 
@@ -358,39 +359,45 @@ vconfig decrypt-value "encrypted_text"
 - ✅ 0 ostrzeżeń kompilatora
 - ✅ 109 testów jednostkowych (93 passing, 16 dokumentują brakującą walidację)
 
+### Wersja 2.3.0 (AES-256-GCM — ADR-010) ✅ ZAKOŃCZONA
+
+- ✅ `AesGcmCipherProvider` — AES-256-GCM z BouncyCastle polyfill dla net48
+- ✅ `VersionedEncryptor` — dispatch na prefix `v2:`, backward-compatible DES reads
+- ✅ `vconfig keygen` — generowanie kluczy AES-256
+- ✅ `vconfig reencrypt` — migracja DES → AES z dry-run
+- ✅ DES garbage detection (U+FFFD check)
+- ✅ ADR-010 — Accepted
+- ✅ Dokumentacja i README zaktualizowane
+
 ### Wersja 3.0 (Przyszłość)
-- [ ] Całkowite usunięcie encryption
-- [ ] Usunięcie deprecated extension methods
-- [ ] Uproszczony kod - tylko mount path configuration
+- [ ] `AllowLegacyDes` domyślnie `false` (opt-in dla DES)
+- [ ] Runtime warning log gdy DES jest włączony
+
+### Wersja 4.0 (Przyszłość)
+- [ ] Usunięcie `LegacyDesCipherProvider` i kodu DES
+- [ ] Usunięcie opcji `AllowLegacyDes`
 
 ---
 
-## ~~Nieaktualne Plany~~ (Anulowane przez ADR-003)
+## ~~Nieaktualne Plany~~ (Częściowo zastąpione przez ADR-010)
 
 <details>
-<summary>❌ Plany rozwoju szyfrowania (ANULOWANE)</summary>
+<summary>Plany anulowane lub zastąpione</summary>
 
-### ❌ ~1.1 Wymiana algorytmu szyfrowania DES na AES-256-GCM~
+### ~~ADR-003: Deprecacja szyfrowania na rzecz SOPS~~
 
-**Status:** ❌ ANULOWANE przez ADR-003
+**Status:** Częściowo zastąpione przez [ADR-010](adr/ADR-010-aes-gcm-with-versioned-ciphertext.md)
 
-**Decyzja:** Zamiast rozwijać własne szyfrowanie, deprecjonujemy je i rekomendujemy SOPS.
+Wniosek o deprecacji wbudowanego szyfrowania został odwrócony. Szyfrowanie zostało zmodernizowane (AES-256-GCM) zamiast usunięte. SOPS pozostaje obsługiwany jako alternatywa, ale nie jest już rekomendowanym domyślnym.
 
-**Dlaczego anulowano:**
-- Migracja DES → AES to breaking change dla wszystkich użytkowników
-- Zarządzanie kluczami to skomplikowany problem
-- SOPS oferuje lepsze bezpieczeństwo i funkcje
-- Separation of concerns: biblioteka do ładowania config ≠ system szyfrowania
-
-### ❌ ~Narzędzie CLI dla migracji DES → AES~
-
-**Status:** ❌ ZMIENIONO
-
-**Faktyczna implementacja:** CLI tool `vconfig` służy do migracji z DES do SOPS, nie do AES.
+**Powody odwrócenia decyzji (szczegóły w ADR-010):**
+- Model deszyfrowania in-memory (plaintext nigdy nie trafia na dysk) jest silniejszy niż naiwne użycie SOPS
+- Agenci AI i indeksery IDE mogą czytać plaintext pliki zostawione przez `sops -d`
+- Koszt operacyjny SOPS nieproporcjonalny dla małych/średnich deploymentów
 
 </details>
 
 ---
 
 *Dokument utworzony: 2026-02-05*
-*Ostatnia aktualizacja: 2026-02-09 (Faza 5.1: Edge case tests - 85 nowych testów, CI/CD dla vconfig tool)*
+*Ostatnia aktualizacja: 2026-04-20 (v2.3.0: AES-256-GCM, odwrócenie deprecacji szyfrowania — ADR-010)*

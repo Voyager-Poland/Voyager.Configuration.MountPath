@@ -43,31 +43,42 @@ config.AddEncryptedJsonFile("secrets.json", key, false, true);
   - `EncryptedMountConfigurationExtensions` - Mount path operations
   - `EncryptedJsonFileExtensions` - Low-level JSON file operations
 
-#### 2. Built-in Encryption Deprecated
+#### 2. Encryption Upgraded: DES → AES-256-GCM
 
-**Status:** ⚠️ DEPRECATED in v2.0, will be REMOVED in v3.0
+**Status:** ✅ AES-256-GCM available in v2.3.0 — legacy DES reads still supported
 
-Built-in DES encryption is deprecated. See [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md) for rationale.
+Built-in encryption has been upgraded from legacy DES to AES-256-GCM (see [ADR-010](adr/ADR-010-aes-gcm-with-versioned-ciphertext.md)). This is **not a breaking change** — existing DES-encrypted files continue to work.
 
-**Recommended alternatives:**
-1. **Mozilla SOPS** - For GitOps and encrypted config files
-2. **Kubernetes Secrets + Sealed Secrets** - For Kubernetes deployments
-3. **Cloud Secret Managers** - Azure Key Vault, AWS Secrets Manager, GCP Secret Manager
-4. **dotnet user-secrets** - For local development
+**What changed:**
+- New writes use AES-256-GCM with versioned format (`v2:BASE64(nonce||ciphertext||tag)`)
+- Existing DES values are readable via `AllowLegacyDes=true` (default in v2.x)
+- A new 32-byte AES key is required (the old DES key cannot be reused)
 
-**Migration tool available:**
+**Migration from DES to AES:**
 ```bash
-# Install migration helper
+# Install CLI tool
 dotnet tool install -g Voyager.Configuration.Tool --prerelease
 
-# Decrypt existing encrypted config for migration to SOPS
-vconfig decrypt --input config/secrets.json --output config/secrets.plain.json
+# 1. Generate new AES key
+export ASPNETCORE_AES_KEY=$(vconfig keygen)
 
-# Now encrypt with SOPS
-sops -e config/secrets.plain.json > config/secrets.json
+# 2. Re-encrypt: old DES key decrypts, new AES key encrypts
+vconfig reencrypt \
+  --input config/secrets.json \
+  --legacy-key-env ASPNETCORE_ENCODEKEY \
+  --new-key-env ASPNETCORE_AES_KEY
+
+# 3. Swap env vars in deployment (put AES key in ASPNETCORE_ENCODEKEY)
+# 4. Remove old DES key from secret manager / vault
 ```
 
-See [ADR-003: Encryption Delegation](adr/ADR-003-encryption-delegation-to-external-tools.md) for detailed migration instructions.
+**Staged legacy removal:**
+- **v2.x** (current): `AllowLegacyDes=true` — DES reads work, AES writes default
+- **v3.x** (planned): `AllowLegacyDes=false` — DES disabled by default, opt-in available
+- **v4.x** (planned): DES code removed entirely
+
+**Alternative: SOPS**
+For organizations requiring KMS integration, key rotation, or audit logging, [SOPS](https://github.com/mozilla/sops) remains a supported alternative via the `IEncryptor` extension point. See [ADR-003](adr/ADR-003-encryption-delegation-to-external-tools.md).
 
 ### Improvements in v2.0
 
@@ -114,8 +125,10 @@ Extension methods reorganized following Single Responsibility Principle:
 
 ### Roadmap
 
-- **v2.0** (Current) - Deprecation warnings, improved architecture, custom exceptions
-- **v3.0** (Planned) - Complete removal of built-in encryption
+- **v2.0** - SOLID architecture, custom exceptions, extension methods split
+- **v2.3** (Current) - AES-256-GCM encryption (ADR-010), CLI keygen/reencrypt
+- **v3.0** (Planned) - `AllowLegacyDes` defaults to `false`
+- **v4.0** (Planned) - Legacy DES code removed entirely
 
 ### Need Help?
 
@@ -131,4 +144,4 @@ No breaking changes. All v1.0 code is compatible with v1.x releases.
 
 ---
 
-*Last updated: 2026-02-08*
+*Last updated: 2026-04-20*

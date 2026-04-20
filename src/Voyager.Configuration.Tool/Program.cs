@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using Voyager.Configuration.MountPath.Encryption;
 
 // Root command
-var rootCommand = new RootCommand("Voyager Configuration Tool - Migration helper for JSON configuration encryption");
+var rootCommand = new RootCommand("Voyager Configuration Tool - Encrypt and decrypt JSON configuration files");
 
 // Shared options
 var keyOption = new Option<string?>(
@@ -92,8 +92,6 @@ encryptCommand.SetHandler(async (FileInfo input, FileInfo? output, string? key, 
 {
     try
     {
-        ShowDeprecationWarning();
-
         if (!input.Exists)
         {
             Console.Error.WriteLine($"Error: Input file not found: {input.FullName}");
@@ -204,9 +202,6 @@ decryptCommand.SetHandler(async (FileInfo input, FileInfo output, string? key, s
         await File.WriteAllTextAsync(output.FullName, decryptedJson);
 
         Console.WriteLine($"✓ Decrypted successfully: {output.FullName}");
-        Console.WriteLine();
-        Console.WriteLine("You can now encrypt this file with SOPS:");
-        Console.WriteLine($"  sops -e {output.FullName} > {input.FullName}");
     }
     catch (Exception ex)
     {
@@ -245,18 +240,6 @@ static string GetEncryptionKey(string? keyParam, string keyEnvVar)
     }
 
     return key;
-}
-
-static void ShowDeprecationWarning()
-{
-    Console.ForegroundColor = ConsoleColor.Yellow;
-    Console.WriteLine();
-    Console.WriteLine("⚠️  WARNING: Built-in encryption is DEPRECATED");
-    Console.WriteLine("This tool is provided for migration purposes only.");
-    Console.WriteLine("For new projects, use Mozilla SOPS instead.");
-    Console.WriteLine("See: https://github.com/mozilla/sops");
-    Console.WriteLine();
-    Console.ResetColor();
 }
 
 static JsonNode EncryptJsonNode(JsonNode node, IEncryptor encryptor)

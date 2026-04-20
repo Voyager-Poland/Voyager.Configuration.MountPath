@@ -17,13 +17,11 @@
     <Title>Voyager Configuration Tool - CLI for JSON encryption/decryption</Title>
     <Authors>Andrzej Świstowski</Authors>
     <Description>
-      CLI tool for encrypting and decrypting JSON configuration files compatible with Voyager.Configuration.MountPath library.
-      Provides migration helper for transitioning from built-in encryption to SOPS.
-
-      WARNING: Built-in encryption is deprecated. This tool is provided for backward compatibility and migration purposes only.
-      For new projects, use Mozilla SOPS instead.
+      CLI tool for encrypting and decrypting JSON configuration files using AES-256-GCM (or legacy DES).
+      Compatible with the Voyager.Configuration.MountPath library. Includes key generation (keygen)
+      and DES-to-AES migration (reencrypt) commands.
     </Description>
-    <PackageTags>configuration;encryption;json;cli;tool;migration;sops</PackageTags>
+    <PackageTags>configuration;encryption;json;cli;tool;aes-gcm;security</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Voyager-Poland/Voyager.Configuration.MountPath.git</RepositoryUrl>

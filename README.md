@@ -277,109 +277,90 @@ public class MySettingsProvider : ISettingsProvider
 builder.Services.AddVoyagerConfiguration<MySettingsProvider>();
 ```
 
-### ⚠️ DEPRECATED: Encrypted Configuration Files
+### Encrypting Configuration
 
-> **This feature is deprecated and will be removed in version 3.0.**
-> Please migrate to external secret management tools.
+Voyager.Configuration.MountPath provides built-in **AES-256-GCM** encryption for sensitive configuration values. Plaintext never touches disk — decryption happens in-memory at the `IConfiguration` level, protecting secrets from AI agents, IDE indexers, swap files, and backups.
 
-**Built-in encryption (deprecated):**
+**1. Generate an encryption key:**
+
+```bash
+dotnet tool install -g Voyager.Configuration.Tool
+vconfig keygen
+# → yK3vM9pQ+L2nR5sT8wXaB1cD4eF7gH0iJ2kL3mN4oP8=
+#
+# Save this value in ASPNETCORE_ENCODEKEY.
+# Anyone with this key can decrypt your configuration.
+```
+
+**2. Set the key as an environment variable:**
+
+```bash
+export ASPNETCORE_ENCODEKEY="yK3vM9pQ+L2nR5sT8wXaB1cD4eF7gH0iJ2kL3mN4oP8="
+```
+
+**3. Encrypt a configuration file:**
+
+```bash
+vconfig encrypt --input config/secrets.json --in-place
+```
+
+Encrypted values are stored in the `v2:` format (`v2:BASE64(nonce||ciphertext||tag)`). Non-string values (numbers, booleans) are preserved unchanged.
+
+**4. Load encrypted configuration at runtime:**
 
 ```csharp
 builder.ConfigureAppConfiguration((context, config) =>
 {
     var provider = context.HostingEnvironment.GetSettingsProvider();
-    var encryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY");
+    var encryptionKey = Environment.GetEnvironmentVariable("ASPNETCORE_ENCODEKEY");
 
-    // Regular files (plain text)
     config.AddMountConfiguration(provider, "logging");
     config.AddMountConfiguration(provider, "appsettings");
 
-    // ⚠️ DEPRECATED - Use SOPS instead
+    // Encrypted files — decrypted in-memory, plaintext never on disk
     config.AddEncryptedMountConfiguration(encryptionKey, provider, "secrets");
     config.AddEncryptedMountConfiguration(encryptionKey, provider, "connectionstrings");
 });
 ```
 
-**Recommended alternative: Mozilla SOPS**
+**Migrating from legacy DES encryption:**
 
-Encrypt configuration files using [SOPS](https://github.com/mozilla/sops) before loading:
+If you have files encrypted with the older DES-based encryption, migrate to AES-256-GCM:
 
 ```bash
-# Encrypt files with SOPS (one-time setup)
-sops -e config/secrets.json > config/secrets.json
+# Generate new AES key
+export ASPNETCORE_AES_KEY=$(vconfig keygen)
 
-# Decrypt in your deployment script or init container
-sops -d /config-encrypted/secrets.json > /config/secrets.json
+# Re-encrypt (DES values → AES, already-AES values untouched)
+vconfig reencrypt --input config/secrets.json \
+  --legacy-key-env ASPNETCORE_ENCODEKEY \
+  --new-key-env ASPNETCORE_AES_KEY
+
+# Swap keys in deployment, then remove old DES key
 ```
 
-```csharp
-// Load decrypted files normally - no code changes needed!
-builder.ConfigureAppConfiguration((context, config) =>
-{
-    var provider = context.HostingEnvironment.GetSettingsProvider();
+See [ADR-010](docs/adr/ADR-010-aes-gcm-with-versioned-ciphertext.md) for the full encryption design, threat model, and migration plan.
 
-    config.AddMountConfiguration(provider, "logging");
-    config.AddMountConfiguration(provider, "secrets");     // Already decrypted by SOPS
-    config.AddMountConfiguration(provider, "appsettings");
-});
-```
+**Alternative: Mozilla SOPS**
 
-**Why migrate to SOPS?**
-- ✅ **More secure**: AES-256-GCM instead of legacy DES
-- ✅ **GitOps-friendly**: Encrypted files can be committed to Git
-- ✅ **Key management**: Integrates with AWS KMS, Azure Key Vault, GCP KMS, Age
-- ✅ **No code changes**: Decrypt before loading, library code stays the same
-- ✅ **Better tooling**: Edit encrypted files without manual decrypt/encrypt cycle
-
-See [ADR-003: Encryption Delegation to External Tools](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for:
-- Detailed SOPS setup guide
-- Migration examples for Kubernetes and Supervisor
-- Comparison of secret management solutions
-- Step-by-step migration path
+For organizations requiring KMS integration, key rotation, or audit logging, [SOPS](https://github.com/mozilla/sops) remains a supported option. The `IEncryptor` interface is an extension point — custom implementations can wrap SOPS or any other tool. See [ADR-003](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for details.
 
 ## Security Considerations
 
-### ⚠️ Encryption Feature Deprecated
+### Encryption — AES-256-GCM
 
-**Built-in encryption is deprecated** and will be removed in version 3.0.
-
-- **Current implementation**: Legacy DES encryption (56-bit, insecure)
-- **Status**: Deprecated for backward compatibility only
-- **Recommendation**: Migrate to external secret management tools
-
-### Recommended Secret Management Solutions
-
-Instead of built-in encryption, use industry-standard tools:
-
-1. **[Mozilla SOPS](https://github.com/mozilla/sops)** - File encryption for GitOps workflows
-   - Encrypts JSON/YAML values while keeping structure readable
-   - Supports AWS KMS, Azure Key Vault, GCP KMS, Age
-   - Git-friendly diffs
-   - **Best for**: GitOps, encrypted configs in Git
-
-2. **Kubernetes Secrets + Sealed Secrets**
-   - Native Kubernetes secret management
-   - Sealed Secrets for GitOps-safe encrypted secrets
-   - **Best for**: Kubernetes deployments
-
-3. **Cloud Secret Managers**
-   - Azure Key Vault, AWS Secrets Manager, GCP Secret Manager
-   - Enterprise-grade key rotation and audit logging
-   - **Best for**: Cloud-native applications
-
-4. **dotnet user-secrets**
-   - For development environments only
-   - **Best for**: Local development
-
-See [ADR-003](docs/adr/ADR-003-encryption-delegation-to-external-tools.md) for detailed migration guide.
+- **Algorithm**: AES-256-GCM with 12-byte random nonce and 16-byte authentication tag per value
+- **Integrity**: Wrong key or tampered ciphertext always throws — never silent garbage
+- **In-memory decryption**: Plaintext stays off disk, protecting against AI agents, IDE indexers, and OS-level backups
+- **Legacy DES support**: Existing DES-encrypted files are readable during migration (`AllowLegacyDes=true` in v2.x, planned removal in v4.x)
 
 ### Best Practices
 
-1. **External Secret Management**: Use SOPS, Kubernetes Secrets, or cloud providers
-2. **File Permissions**: Ensure configuration files have appropriate read permissions
-3. **Container Security**: Mount configuration volumes as read-only (`:ro`)
-4. **Key Management**: Never hardcode secrets in source code or images
-5. **Separation of Concerns**: Configuration loading ≠ secret management
+1. **Key management**: Store the AES key in environment variables or a secret manager — never in source code
+2. **File permissions**: Ensure configuration files have appropriate read permissions
+3. **Container security**: Mount configuration volumes as read-only (`:ro`)
+4. **Migration**: Run `vconfig reencrypt` to migrate legacy DES files to AES-256-GCM
+5. **For enterprise needs**: Consider SOPS + KMS for key rotation and audit logging via a custom `IEncryptor`
 
 ## Architecture
 

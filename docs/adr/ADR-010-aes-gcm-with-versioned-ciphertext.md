@@ -141,6 +141,7 @@ vconfig reencrypt --input config/secrets.json
 - Writes through `AesGcmEncryptor` (always `v2:...`).
 - Leaves already-AES values untouched (idempotent).
 - Supports `--dry-run` and reports count of migrated values.
+- **DES garbage detection:** DES-CBC has no authentication — a plaintext value that happens to be valid Base64 with length divisible by 8 can DES-"decrypt" without error, producing garbage bytes. The reencrypt command checks for U+FFFD (Unicode replacement character) in the decrypted output; `Encoding.UTF8.GetString` replaces invalid byte sequences with U+FFFD, so garbage DES output reliably triggers this check. Values that produce U+FFFD are left untouched (treated as non-encrypted plaintext). This prevents silent data loss on config files containing mixed plaintext and encrypted values — a scenario explicitly supported by the versioned ciphertext design.
 
 ### 6. Remove SOPS-migration messaging
 

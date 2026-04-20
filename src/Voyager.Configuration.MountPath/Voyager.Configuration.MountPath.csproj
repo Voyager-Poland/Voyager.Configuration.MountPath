@@ -37,7 +37,7 @@
     <PackageIcon>voyager-nugets-ikona-128x128.png</PackageIcon>
     <PackAsTool>False</PackAsTool>
     <PackageTags>Kubernetes,Docker,Linux,JSON,Configuration,Environment,Conditional,SOLID,SRP,ASP.NET-Core</PackageTags>
-    <PackageReleaseNotes>v2.3.0: AES-256-GCM encryption (ADR-010) — replaces DES as default cipher. Versioned ciphertext format (v2: prefix), BouncyCastle polyfill for .NET Framework 4.8, backward-compatible DES reads. See CHANGELOG.md for details.</PackageReleaseNotes>
+    <PackageReleaseNotes>AES-256-GCM encryption (ADR-010) replaces DES as the default cipher. Includes versioned ciphertext format (v2: prefix), BouncyCastle polyfill for .NET Framework 4.8, and backward-compatible legacy DES reads. See CHANGELOG.md for details.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

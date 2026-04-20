@@ -32,16 +32,15 @@ docker build -t myapp:latest .
 kubectl apply -f k8s/
 ```
 
-### 3. [MigrationToSops](MigrationToSops/) - Migracja do SOPS
-Przewodnik migracji z wbudowanego szyfrowania DES do Mozilla SOPS:
-- Deszyfrowanie starych plików używając `vconfig`
-- Konfiguracja SOPS (Age, AWS KMS, Azure Key Vault)
-- Szyfrowanie plików używając SOPS
-- Integracja z CI/CD
+### 3. [MigrationFromDes](MigrationFromDes/) - Migracja z DES na AES-256-GCM
+Przewodnik migracji z legacy DES do AES-256-GCM (ADR-010):
+- Generowanie nowego klucza AES (`vconfig keygen`)
+- Re-szyfrowanie plików (`vconfig reencrypt`)
+- Weryfikacja z `--dry-run`
 
 **Jak uruchomić:**
 ```bash
-cd samples/MigrationToSops
+cd samples/MigrationFromDes
 # Zobacz README.md w tym folderze dla szczegółowych instrukcji
 ```
 
@@ -50,13 +49,13 @@ cd samples/MigrationToSops
 - .NET 8.0 SDK (lub nowszy)
 - Docker (dla przykładu Kubernetes)
 - kubectl (dla przykładu Kubernetes)
-- SOPS i Age/KMS (dla przykładu migracji)
+- Voyager.Configuration.Tool (`vconfig`) — dla przykładu migracji DES→AES
 
 ## Dodatkowe Zasoby
 
 - [Główny README](../README.md) - Pełna dokumentacja biblioteki
-- [ADR-003](../docs/adr/ADR-003-encryption-delegation-to-external-tools.md) - Decyzja o delegacji szyfrowania
-- [ADR-004](../docs/adr/ADR-004-cli-tool-for-configuration-encryption.md) - CLI tool dla migracji
+- [ADR-010](../docs/adr/ADR-010-aes-gcm-with-versioned-ciphertext.md) - AES-256-GCM encryption
+- [ADR-004](../docs/adr/ADR-004-cli-tool-for-configuration-encryption.md) - CLI tool
 - [ROADMAP](../docs/ROADMAP.md) - Plan rozwoju biblioteki
 
 ## Support

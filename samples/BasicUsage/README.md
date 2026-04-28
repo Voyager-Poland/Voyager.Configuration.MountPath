@@ -125,4 +125,4 @@ Zmiana pliku konfiguracji automatycznie przeładowuje wartości (jeśli `reloadO
 ## Następne kroki
 
 - Zobacz [KubernetesExample](../KubernetesExample/) - jak używać w Kubernetes/Docker
-- Zobacz [MigrationToSops](../MigrationToSops/) - jak migrować z encryption do SOPS
+- Zobacz [MigrationFromDes](../MigrationFromDes/) - jak migrować z DES do AES-256-GCM

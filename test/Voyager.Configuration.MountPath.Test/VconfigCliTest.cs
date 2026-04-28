@@ -13,6 +13,9 @@ namespace Voyager.Configuration.MountPath.Test
 			Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..",
 				"..", "src", "Voyager.Configuration.Tool", "Voyager.Configuration.Tool.csproj"));
 
+		private static readonly string Configuration =
+			new DirectoryInfo(TestContext.CurrentContext.TestDirectory).Parent!.Name;
+
 		private string _tempDir = null!;
 
 		[SetUp]
@@ -34,7 +37,7 @@ namespace Voyager.Configuration.MountPath.Test
 			var psi = new ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"run --no-build --project \"{ToolProject}\" -- {arguments}",
+				Arguments = $"run --no-build -c {Configuration} --project \"{ToolProject}\" -- {arguments}",
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				UseShellExecute = false,

@@ -251,6 +251,63 @@ namespace Voyager.Configuration.MountPath.Test
 		}
 
 		[Test]
+		public void Decrypt_JsonWithComments_SkipsCommentsAndDecrypts()
+		{
+			// vconfig encrypt/decrypt currently use the legacy DES Encryptor class.
+			var key = "DesKey1234567890";
+			var encryptor = new Encryptor(key);
+			var encryptedSecret = encryptor.Encrypt("plaintext-secret");
+
+			// ASP.NET Core-style JSONC: line and block comments mixed in.
+			// Reproduces the bug where JsonNode.Parse threw on '/' at start of property name.
+			var jsonc = "{\n" +
+				"  // Connection string for production database\n" +
+				$"  \"ConnectionString\": \"{encryptedSecret}\",\n" +
+				"  /* Timeout in seconds */\n" +
+				"  \"Timeout\": 30\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var outputPath = Path.Combine(_tempDir, "config.plain.json");
+			File.WriteAllText(inputPath, jsonc);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = key });
+
+			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
+
+			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
+			Assert.That(result["ConnectionString"]!.GetValue<string>(), Is.EqualTo("plaintext-secret"));
+			Assert.That(result["Timeout"]!.GetValue<int>(), Is.EqualTo(30));
+		}
+
+		[Test]
+		public void Encrypt_JsonWithTrailingComma_Succeeds()
+		{
+			var key = "DesKey1234567890";
+
+			var jsonWithTrailingComma = "{\n" +
+				"  \"ApiKey\": \"secret-value\",\n" +
+				"  \"Timeout\": 30,\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var outputPath = Path.Combine(_tempDir, "config.encrypted.json");
+			File.WriteAllText(inputPath, jsonWithTrailingComma);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"encrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = key });
+
+			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
+
+			// Round-trip: decrypt the encrypted output to confirm the encrypt path actually worked.
+			var encryptor = new Encryptor(key);
+			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
+			Assert.That(encryptor.Decrypt(result["ApiKey"]!.GetValue<string>()), Is.EqualTo("secret-value"));
+			Assert.That(result["Timeout"]!.GetValue<int>(), Is.EqualTo(30));
+		}
+
+		[Test]
 		public void Reencrypt_DryRun_FileUnchanged()
 		{
 			var desKey = "LegacyDesKey12345678";

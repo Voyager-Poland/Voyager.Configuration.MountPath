@@ -8,6 +8,15 @@ using Voyager.Configuration.MountPath.Encryption;
 // Root command
 var rootCommand = new RootCommand("Voyager Configuration Tool - Encrypt and decrypt JSON configuration files");
 
+// JSON parsing options — accept JSON-with-comments and trailing commas, matching
+// ASP.NET Core's configuration JSON reader. Comments are skipped (not preserved
+// in output), since encrypted/decrypted files are written back without them.
+var jsonDocOptions = new JsonDocumentOptions
+{
+    CommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true
+};
+
 // Shared options
 var keyOption = new Option<string?>(
     aliases: new[] { "--key", "-k" },
@@ -117,7 +126,7 @@ encryptCommand.SetHandler(async (FileInfo input, FileInfo? output, string? key, 
 
         // Read and parse JSON
         var jsonText = await File.ReadAllTextAsync(input.FullName);
-        var jsonNode = JsonNode.Parse(jsonText);
+        var jsonNode = JsonNode.Parse(jsonText, documentOptions: jsonDocOptions);
 
         if (jsonNode == null)
         {
@@ -187,7 +196,7 @@ decryptCommand.SetHandler(async (FileInfo input, FileInfo output, string? key, s
 
         // Read and parse JSON
         var jsonText = await File.ReadAllTextAsync(input.FullName);
-        var jsonNode = JsonNode.Parse(jsonText);
+        var jsonNode = JsonNode.Parse(jsonText, documentOptions: jsonDocOptions);
 
         if (jsonNode == null)
         {
@@ -285,7 +294,7 @@ reencryptCommand.SetHandler(async (FileInfo input, string legacyKeyEnv, string n
             aesCipher, legacyDes: null, allowLegacyDes: false);
 
         var jsonText = await File.ReadAllTextAsync(input.FullName);
-        var jsonNode = JsonNode.Parse(jsonText);
+        var jsonNode = JsonNode.Parse(jsonText, documentOptions: jsonDocOptions);
         if (jsonNode == null)
         {
             Console.Error.WriteLine("Error: Invalid JSON file");

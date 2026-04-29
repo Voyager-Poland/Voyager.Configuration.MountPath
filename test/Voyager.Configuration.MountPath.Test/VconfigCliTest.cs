@@ -255,7 +255,7 @@ namespace Voyager.Configuration.MountPath.Test
 		{
 			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
 			using var aesCipher = new AesGcmCipherProvider(aesKey);
-			var writer = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			using var writer = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			var encryptedSecret = writer.Encrypt("plaintext-secret");
 
 			// ASP.NET Core-style JSONC: line and block comments mixed in.
@@ -302,7 +302,7 @@ namespace Voyager.Configuration.MountPath.Test
 
 			// Round-trip: decrypt the v2: encrypted output with AES to confirm the encrypt path worked.
 			using var aesCipher = new AesGcmCipherProvider(aesKey);
-			var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			using var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
 			Assert.That(result["ApiKey"]!.GetValue<string>(), Does.StartWith(VersionedEncryptor.V2Prefix));
 			Assert.That(reader.Decrypt(result["ApiKey"]!.GetValue<string>()), Is.EqualTo("secret-value"));
@@ -323,7 +323,7 @@ namespace Voyager.Configuration.MountPath.Test
 
 			// Round-trip via library
 			using var aesCipher = new AesGcmCipherProvider(aesKey);
-			var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			using var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			Assert.That(reader.Decrypt(stdout), Is.EqualTo("my-secret"));
 		}
 
@@ -349,7 +349,7 @@ namespace Voyager.Configuration.MountPath.Test
 			var desKey = "LegacyDesKey12345678";
 
 			using var aesCipher = new AesGcmCipherProvider(aesKey);
-			var aesWriter = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			using var aesWriter = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			var desEncryptor = new Encryptor(desKey);
 
 			var json = new JsonObject

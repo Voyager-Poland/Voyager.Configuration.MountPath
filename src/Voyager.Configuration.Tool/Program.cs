@@ -25,7 +25,7 @@ var keyOption = new Option<string?>(
 var keyEnvOption = new Option<string>(
     aliases: new[] { "--key-env" },
     getDefaultValue: () => "ASPNETCORE_ENCODEKEY",
-    description: "Environment variable containing AES-256 encryption key");
+    description: "Name of environment variable holding the AES-256 encryption key");
 
 // Legacy DES support — only used by decrypt commands so older ciphertext can still be read.
 // Named distinctly from reencrypt's own legacyKeyEnvOption (which has different defaults).
@@ -35,7 +35,7 @@ var decLegacyKeyOption = new Option<string?>(
 
 var decLegacyKeyEnvOption = new Option<string?>(
     aliases: new[] { "--legacy-key-env" },
-    description: "Environment variable containing legacy DES key (enables decrypting pre-v2 values)");
+    description: "Name of environment variable holding the legacy DES key (enables decrypting pre-v2 values)");
 
 // encrypt-value command — single value, AES-256-GCM
 var encryptValueCommand = new Command("encrypt-value", "Encrypt single text value");
@@ -48,8 +48,10 @@ encryptValueCommand.SetHandler((string text, string? key, string keyEnv) =>
     try
     {
         var encryptionKey = GetEncryptionKey(key, keyEnv);
-        using var aesCipher = new AesGcmCipherProvider(encryptionKey);
-        var encryptor = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+        // VersionedEncryptor.Dispose() disposes the inner AesGcmCipherProvider — we don't
+        // wrap aesCipher in a separate `using` to avoid double-dispose.
+        using var encryptor = new VersionedEncryptor(
+            new AesGcmCipherProvider(encryptionKey), legacyDes: null, allowLegacyDes: false);
         var encrypted = encryptor.Encrypt(text);
         Console.WriteLine(encrypted);
     }
@@ -76,9 +78,9 @@ decryptValueCommand.SetHandler((string encrypted, string? key, string keyEnv, st
     try
     {
         var encryptionKey = GetEncryptionKey(key, keyEnv);
-        using var aesCipher = new AesGcmCipherProvider(encryptionKey);
         var legacyDes = GetOptionalLegacyDes(legacyKey, legacyKeyEnv);
-        var encryptor = new VersionedEncryptor(aesCipher, legacyDes, allowLegacyDes: legacyDes != null);
+        using var encryptor = new VersionedEncryptor(
+            new AesGcmCipherProvider(encryptionKey), legacyDes, allowLegacyDes: legacyDes != null);
         var decrypted = encryptor.Decrypt(encrypted);
         Console.WriteLine(decrypted);
     }
@@ -127,8 +129,8 @@ encryptCommand.SetHandler(async (FileInfo input, FileInfo? output, string? key, 
         }
 
         var encryptionKey = GetEncryptionKey(key, keyEnv);
-        using var aesCipher = new AesGcmCipherProvider(encryptionKey);
-        var encryptor = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+        using var encryptor = new VersionedEncryptor(
+            new AesGcmCipherProvider(encryptionKey), legacyDes: null, allowLegacyDes: false);
 
         // Determine output file
         var outputFile = inPlace ? input : (output ?? input);
@@ -211,9 +213,9 @@ decryptCommand.SetHandler(async (System.CommandLine.Invocation.InvocationContext
         }
 
         var encryptionKey = GetEncryptionKey(key, keyEnv);
-        using var aesCipher = new AesGcmCipherProvider(encryptionKey);
         var legacyDes = GetOptionalLegacyDes(legacyKey, legacyKeyEnv);
-        var encryptor = new VersionedEncryptor(aesCipher, legacyDes, allowLegacyDes: legacyDes != null);
+        using var encryptor = new VersionedEncryptor(
+            new AesGcmCipherProvider(encryptionKey), legacyDes, allowLegacyDes: legacyDes != null);
 
         if (output.Exists && !force)
         {
@@ -272,10 +274,10 @@ var reencryptInputOption = new Option<FileInfo>(
 var legacyKeyEnvOption = new Option<string>(
     "--legacy-key-env",
     getDefaultValue: () => "ASPNETCORE_ENCODEKEY",
-    description: "Environment variable containing the legacy DES key (for reading old values)");
+    description: "Name of environment variable holding the legacy DES key (for reading old values)");
 var newKeyEnvOption = new Option<string>(
     "--new-key-env",
-    description: "Environment variable containing the new AES-256 key (for writing)") { IsRequired = true };
+    description: "Name of environment variable holding the new AES-256 key (for writing)") { IsRequired = true };
 var dryRunOption = new Option<bool>(
     "--dry-run",
     description: "Show what would be migrated without writing changes");
@@ -371,7 +373,8 @@ static string GetEncryptionKey(string? keyParam, string keyEnvVar)
 {
     if (!string.IsNullOrWhiteSpace(keyParam))
     {
-        Console.WriteLine("⚠️  Warning: Passing key via --key is not secure. Use --key-env instead.");
+        // stderr — keeps stdout clean for machine-readable commands like decrypt-value/encrypt-value.
+        Console.Error.WriteLine("⚠️  Warning: Passing key via --key is not secure. Use --key-env instead.");
         return keyParam;
     }
 
@@ -391,7 +394,8 @@ static IEncryptor? GetOptionalLegacyDes(string? legacyKey, string? legacyKeyEnv)
     string? resolved = null;
     if (!string.IsNullOrWhiteSpace(legacyKey))
     {
-        Console.WriteLine("⚠️  Warning: Passing legacy key via --legacy-key is not secure. Use --legacy-key-env instead.");
+        // stderr — keeps stdout clean for machine-readable commands like decrypt-value.
+        Console.Error.WriteLine("⚠️  Warning: Passing legacy key via --legacy-key is not secure. Use --legacy-key-env instead.");
         resolved = legacyKey;
     }
     else if (!string.IsNullOrWhiteSpace(legacyKeyEnv))

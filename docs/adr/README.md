@@ -30,7 +30,7 @@ Each ADR follows this structure:
 |-----|-------|--------|------|
 | [ADR-001](ADR-001-extension-methods-organization.md) | Organization of Configuration Extension Methods | Accepted | 2026-02-06 |
 | [ADR-002](ADR-002-settings-builder-pattern.md) | Settings Builder Pattern | Accepted | 2026-02-06 |
-| [ADR-003](ADR-003-encryption-delegation-to-external-tools.md) | Encryption Delegation to External Tools | Superseded (in part) by ADR-010 | 2026-02-07 |
+| [ADR-003](ADR-003-encryption-delegation-to-external-tools.md) | Encryption Delegation to External Tools | Superseded | 2026-02-06 |
 | [ADR-004](ADR-004-cli-tool-for-configuration-encryption.md) | CLI Tool for Configuration Encryption | Accepted | 2026-02-07 |
 | [ADR-005](ADR-005-async-configuration-loading.md) | Async Configuration Loading | Accepted | 2026-02-07 |
 | [ADR-006](ADR-006-custom-exception-types-and-error-handling.md) | Custom Exception Types and Error Handling | Accepted | 2026-02-07 |

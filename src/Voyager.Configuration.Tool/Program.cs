@@ -456,7 +456,13 @@ static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor, string path
             {
                 return JsonValue.Create(encryptor.Decrypt(str));
             }
-            catch (Exception ex)
+            // Only the exception types Decrypt is documented/expected to raise for bad
+            // ciphertext or wrong key. Anything else (OOM, OperationCanceledException,
+            // genuine bugs) must propagate unwrapped so diagnostics aren't misleading.
+            catch (Exception ex) when (
+                ex is EncryptionException ||
+                ex is CryptographicException ||
+                ex is FormatException)
             {
                 throw new InvalidOperationException(
                     $"Failed to decrypt value at '{path}'. " +
@@ -490,16 +496,18 @@ static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor, string path
 }
 
 // JSONPath child accessor. Uses dot-notation for simple identifiers (`$.foo`) and
-// bracket-notation for keys with dots/special chars (`$['Microsoft.Hosting.Lifetime']`).
-// Without this, a config key like "Microsoft.Hosting.Lifetime" would render as
-// `$.Microsoft.Hosting.Lifetime` and look like three nested levels.
+// bracket-notation for everything else (`$['Microsoft.Hosting.Lifetime']`, `$['123']`).
+// "Simple identifier" matches the JSONPath dot-notation rule: first char is a letter or
+// underscore, remaining chars are letters/digits/underscore. Keys starting with a digit
+// (e.g. "123") would render as `$.123` — invalid in many JSONPath parsers.
 static string AppendJsonPathKey(string path, string key)
 {
-    bool isSimpleIdentifier = key.Length > 0;
+    bool isSimpleIdentifier = key.Length > 0 && (char.IsLetter(key[0]) || key[0] == '_');
     if (isSimpleIdentifier)
     {
-        foreach (var c in key)
+        for (int i = 1; i < key.Length; i++)
         {
+            var c = key[i];
             if (!char.IsLetterOrDigit(c) && c != '_')
             {
                 isSimpleIdentifier = false;

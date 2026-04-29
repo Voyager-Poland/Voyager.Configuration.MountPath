@@ -2,9 +2,13 @@
 
 ## Status
 
-Proposed
+Superseded (in part) by [ADR-010](ADR-010-aes-gcm-with-versioned-ciphertext.md)
 
 **Date**: 2026-02-06
+
+**Superseded**: 2026-04-15
+
+> The "deprecate built-in encryption" conclusion of this ADR is superseded by ADR-010, which modernizes built-in encryption from DES to AES-256-GCM. SOPS and other external tools remain documented as supported integration options through the `IEncryptor` extension point.
 
 ## Context
 

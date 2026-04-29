@@ -352,11 +352,11 @@ namespace Voyager.Configuration.MountPath.Test
 			using var aesWriter = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			var desEncryptor = new Encryptor(desKey);
 
+			// Strict-decrypt: every string must be ciphertext. Numbers are left alone.
 			var json = new JsonObject
 			{
 				["modernSecret"] = aesWriter.Encrypt("modern-value"),
 				["legacySecret"] = desEncryptor.Encrypt("legacy-value"),
-				["plainText"] = "not encrypted",
 				["count"] = 42
 			};
 			var inputPath = Path.Combine(_tempDir, "mixed.json");
@@ -372,8 +372,139 @@ namespace Voyager.Configuration.MountPath.Test
 			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
 			Assert.That(result["modernSecret"]!.GetValue<string>(), Is.EqualTo("modern-value"));
 			Assert.That(result["legacySecret"]!.GetValue<string>(), Is.EqualTo("legacy-value"));
-			Assert.That(result["plainText"]!.GetValue<string>(), Is.EqualTo("not encrypted"));
 			Assert.That(result["count"]!.GetValue<int>(), Is.EqualTo(42));
+		}
+
+		[Test]
+		public void Encrypt_Then_Decrypt_RoundTrip_RestoresOriginalValues()
+		{
+			// Full CLI round-trip: vconfig encrypt → vconfig decrypt with the same key.
+			// This is the most basic invariant — if it doesn't hold, the tool is broken.
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var originalJson =
+				"{\n" +
+				"  \"ConnectionString\": \"Server=db;Password=secret\",\n" +
+				"  \"ApiKey\": \"my-api-key with spaces and stuff\",\n" +
+				"  \"Nested\": { \"InnerSecret\": \"deep-value\" },\n" +
+				"  \"Timeout\": 30,\n" +
+				"  \"Enabled\": true\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var encryptedPath = Path.Combine(_tempDir, "config.encrypted.json");
+			var decryptedPath = Path.Combine(_tempDir, "config.decrypted.json");
+			File.WriteAllText(inputPath, originalJson);
+
+			var (encExit, _, encErr) = RunVconfig(
+				$"encrypt --input \"{inputPath}\" --output \"{encryptedPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+			Assert.That(encExit, Is.EqualTo(0), () => encErr);
+
+			// String values are now ciphertext (v2: prefix); non-strings unchanged.
+			var encrypted = JsonNode.Parse(File.ReadAllText(encryptedPath))!.AsObject();
+			Assert.That(encrypted["ConnectionString"]!.GetValue<string>(),
+				Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(encrypted["ApiKey"]!.GetValue<string>(),
+				Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(encrypted["Nested"]!["InnerSecret"]!.GetValue<string>(),
+				Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(encrypted["Timeout"]!.GetValue<int>(), Is.EqualTo(30));
+			Assert.That(encrypted["Enabled"]!.GetValue<bool>(), Is.True);
+
+			var (decExit, _, decErr) = RunVconfig(
+				$"decrypt --input \"{encryptedPath}\" --output \"{decryptedPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+			Assert.That(decExit, Is.EqualTo(0), () => decErr);
+
+			var decrypted = JsonNode.Parse(File.ReadAllText(decryptedPath))!.AsObject();
+			Assert.That(decrypted["ConnectionString"]!.GetValue<string>(),
+				Is.EqualTo("Server=db;Password=secret"));
+			Assert.That(decrypted["ApiKey"]!.GetValue<string>(),
+				Is.EqualTo("my-api-key with spaces and stuff"));
+			Assert.That(decrypted["Nested"]!["InnerSecret"]!.GetValue<string>(),
+				Is.EqualTo("deep-value"));
+			Assert.That(decrypted["Timeout"]!.GetValue<int>(), Is.EqualTo(30));
+			Assert.That(decrypted["Enabled"]!.GetValue<bool>(), Is.True);
+		}
+
+		[Test]
+		public void Decrypt_NonEncryptedValue_FailsLoudWithJsonPath()
+		{
+			// Strict mode: a string that isn't valid ciphertext must error out (no silent passthrough).
+			// The error must include the JSON path so the user knows which value broke.
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var plaintextJson =
+				"{\n" +
+				"  \"Database\": {\n" +
+				"    \"ConnectionString\": \"Server=localhost\"\n" +
+				"  }\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "plain.json");
+			var outputPath = Path.Combine(_tempDir, "out.json");
+			File.WriteAllText(inputPath, plaintextJson);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+
+			Assert.That(exitCode, Is.Not.EqualTo(0),
+				"decrypt of a plaintext value must fail (no silent fallthrough)");
+			Assert.That(stderr, Does.Contain("$.Database.ConnectionString"),
+				"error must report the full JSON path, not just the leaf key");
+		}
+
+		[Test]
+		public void Decrypt_KeyStartingWithDigit_ReportedInBracketNotation()
+		{
+			// "123" is not a valid JSONPath dot-notation identifier (must start with letter/_),
+			// so it must use bracket notation `$['123']` rather than `$.123`.
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var json = "{\n" +
+				"  \"Items\": {\n" +
+				"    \"123\": \"plaintext-not-ciphertext\"\n" +
+				"  }\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var outputPath = Path.Combine(_tempDir, "out.json");
+			File.WriteAllText(inputPath, json);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+
+			Assert.That(exitCode, Is.Not.EqualTo(0));
+			Assert.That(stderr, Does.Contain("$.Items['123']"),
+				"key starting with a digit must use bracket notation");
+		}
+
+		[Test]
+		public void Decrypt_KeyWithDots_ReportedInBracketNotation()
+		{
+			// ASP.NET Core configs commonly use keys like "Microsoft.Hosting.Lifetime".
+			// Dot-notation would render that as `$.Microsoft.Hosting.Lifetime` — looks like
+			// three levels of nesting. Bracket notation disambiguates.
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var json = "{\n" +
+				"  \"Logging\": {\n" +
+				"    \"LogLevel\": {\n" +
+				"      \"Microsoft.Hosting.Lifetime\": \"plaintext-not-ciphertext\"\n" +
+				"    }\n" +
+				"  }\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var outputPath = Path.Combine(_tempDir, "out.json");
+			File.WriteAllText(inputPath, json);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+
+			Assert.That(exitCode, Is.Not.EqualTo(0));
+			Assert.That(stderr, Does.Contain("$.Logging.LogLevel['Microsoft.Hosting.Lifetime']"),
+				"key with dots must be rendered in bracket notation");
 		}
 
 		[Test]

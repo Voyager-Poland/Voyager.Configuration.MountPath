@@ -236,8 +236,8 @@ decryptCommand.SetHandler(async (System.CommandLine.Invocation.InvocationContext
             Environment.Exit(1);
         }
 
-        // Decrypt values
-        var decryptedNode = DecryptJsonNode(jsonNode, encryptor);
+        // Decrypt values — strict: any decrypt failure is reported with JSON path and exits non-zero.
+        var decryptedNode = DecryptJsonNode(jsonNode, encryptor, "$");
 
         // Write output
         var options = new JsonSerializerOptions { WriteIndented = true };
@@ -443,25 +443,34 @@ static JsonNode EncryptJsonNode(JsonNode node, IEncryptor encryptor)
     return node.DeepClone();
 }
 
-static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor)
+// Strict decrypt: every string value must decrypt cleanly. A failure is wrapped with the
+// JSON path so the user can see which value failed (and `vconfig encrypt` is symmetric, so
+// every string in a vconfig-encrypted file is expected to be ciphertext).
+static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor, string path)
 {
     if (node is JsonValue value)
     {
-        // Decrypt only string values
         if (value.TryGetValue<string>(out var str))
         {
             try
             {
-                // Try to decrypt - if it fails, it might not be encrypted
                 return JsonValue.Create(encryptor.Decrypt(str));
             }
-            catch
+            // Only the exception types Decrypt is documented/expected to raise for bad
+            // ciphertext or wrong key. Anything else (OOM, OperationCanceledException,
+            // genuine bugs) must propagate unwrapped so diagnostics aren't misleading.
+            catch (Exception ex) when (
+                ex is EncryptionException ||
+                ex is CryptographicException ||
+                ex is FormatException)
             {
-                // Not encrypted, return as-is
-                return value.DeepClone();
+                throw new InvalidOperationException(
+                    $"Failed to decrypt value at '{path}'. " +
+                    "Verify the key matches the one used to encrypt and that the value was produced by 'vconfig encrypt'. " +
+                    $"Underlying error: {ex.Message}", ex);
             }
         }
-        // Numbers, booleans remain unchanged
+        // Numbers, booleans, null remain unchanged
         return value.DeepClone();
     }
     else if (node is JsonObject obj)
@@ -469,20 +478,50 @@ static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor)
         var result = new JsonObject();
         foreach (var (key, val) in obj)
         {
-            result[key] = val != null ? DecryptJsonNode(val, encryptor) : null;
+            result[key] = val != null ? DecryptJsonNode(val, encryptor, AppendJsonPathKey(path, key)) : null;
         }
         return result;
     }
     else if (node is JsonArray arr)
     {
         var result = new JsonArray();
-        foreach (var item in arr)
+        for (int i = 0; i < arr.Count; i++)
         {
-            result.Add(item != null ? DecryptJsonNode(item, encryptor) : null);
+            var item = arr[i];
+            result.Add(item != null ? DecryptJsonNode(item, encryptor, $"{path}[{i}]") : null);
         }
         return result;
     }
     return node.DeepClone();
+}
+
+// JSONPath child accessor. Uses dot-notation for simple identifiers (`$.foo`) and
+// bracket-notation for everything else (`$['Microsoft.Hosting.Lifetime']`, `$['123']`).
+// "Simple identifier" matches the JSONPath dot-notation rule: first char is a letter or
+// underscore, remaining chars are letters/digits/underscore. Keys starting with a digit
+// (e.g. "123") would render as `$.123` — invalid in many JSONPath parsers.
+static string AppendJsonPathKey(string path, string key)
+{
+    bool isSimpleIdentifier = key.Length > 0 && (char.IsLetter(key[0]) || key[0] == '_');
+    if (isSimpleIdentifier)
+    {
+        for (int i = 1; i < key.Length; i++)
+        {
+            var c = key[i];
+            if (!char.IsLetterOrDigit(c) && c != '_')
+            {
+                isSimpleIdentifier = false;
+                break;
+            }
+        }
+    }
+
+    if (isSimpleIdentifier)
+        return $"{path}.{key}";
+
+    // Bracket notation — escape backslashes first, then single quotes.
+    var escaped = key.Replace("\\", "\\\\").Replace("'", "\\'");
+    return $"{path}['{escaped}']";
 }
 
 static JsonNode ReencryptJsonNode(

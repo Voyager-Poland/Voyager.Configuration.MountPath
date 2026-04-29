@@ -66,6 +66,18 @@ Decrypt an encrypted JSON file to a new plain file:
 vconfig decrypt --input config/secrets.json --output config/secrets.plain.json
 ```
 
+If the file contains both modern AES-GCM (`v2:`) values and legacy DES values, supply the DES key via `--legacy-key-env`:
+
+```bash
+vconfig decrypt \
+  --input config/secrets.json \
+  --output config/secrets.plain.json \
+  --key-env ASPNETCORE_ENCODEKEY \
+  --legacy-key-env LEGACY_DES_KEY
+```
+
+Without `--legacy-key-env`, legacy DES values are left as-is (treated as plaintext). For one-shot conversion of an entire file from DES to AES, use `reencrypt` instead.
+
 ### Re-encrypt Legacy DES → AES-256-GCM
 
 Migrate a file encrypted with the legacy DES cipher to AES-256-GCM. Reads with the legacy DES key and writes with the new AES key. Use `--dry-run` first to see what would change:

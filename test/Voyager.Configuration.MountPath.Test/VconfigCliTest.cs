@@ -253,10 +253,10 @@ namespace Voyager.Configuration.MountPath.Test
 		[Test]
 		public void Decrypt_JsonWithComments_SkipsCommentsAndDecrypts()
 		{
-			// vconfig encrypt/decrypt currently use the legacy DES Encryptor class.
-			var key = "DesKey1234567890";
-			var encryptor = new Encryptor(key);
-			var encryptedSecret = encryptor.Encrypt("plaintext-secret");
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+			using var aesCipher = new AesGcmCipherProvider(aesKey);
+			var writer = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			var encryptedSecret = writer.Encrypt("plaintext-secret");
 
 			// ASP.NET Core-style JSONC: line and block comments mixed in.
 			// Reproduces the bug where JsonNode.Parse threw on '/' at start of property name.
@@ -272,7 +272,7 @@ namespace Voyager.Configuration.MountPath.Test
 
 			var (exitCode, _, stderr) = RunVconfig(
 				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
-				new Dictionary<string, string> { ["TEST_KEY"] = key });
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
 
 			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
 
@@ -284,7 +284,7 @@ namespace Voyager.Configuration.MountPath.Test
 		[Test]
 		public void Encrypt_JsonWithTrailingComma_Succeeds()
 		{
-			var key = "DesKey1234567890";
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
 
 			var jsonWithTrailingComma = "{\n" +
 				"  \"ApiKey\": \"secret-value\",\n" +
@@ -296,15 +296,84 @@ namespace Voyager.Configuration.MountPath.Test
 
 			var (exitCode, _, stderr) = RunVconfig(
 				$"encrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
-				new Dictionary<string, string> { ["TEST_KEY"] = key });
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
 
 			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
 
-			// Round-trip: decrypt the encrypted output to confirm the encrypt path actually worked.
-			var encryptor = new Encryptor(key);
+			// Round-trip: decrypt the v2: encrypted output with AES to confirm the encrypt path worked.
+			using var aesCipher = new AesGcmCipherProvider(aesKey);
+			var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
 			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
-			Assert.That(encryptor.Decrypt(result["ApiKey"]!.GetValue<string>()), Is.EqualTo("secret-value"));
+			Assert.That(result["ApiKey"]!.GetValue<string>(), Does.StartWith(VersionedEncryptor.V2Prefix));
+			Assert.That(reader.Decrypt(result["ApiKey"]!.GetValue<string>()), Is.EqualTo("secret-value"));
 			Assert.That(result["Timeout"]!.GetValue<int>(), Is.EqualTo(30));
+		}
+
+		[Test]
+		public void EncryptValue_WritesV2Prefix()
+		{
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var (exitCode, stdout, stderr) = RunVconfig(
+				$"encrypt-value \"my-secret\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+
+			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
+			Assert.That(stdout, Does.StartWith(VersionedEncryptor.V2Prefix));
+
+			// Round-trip via library
+			using var aesCipher = new AesGcmCipherProvider(aesKey);
+			var reader = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			Assert.That(reader.Decrypt(stdout), Is.EqualTo("my-secret"));
+		}
+
+		[Test]
+		public void DecryptValue_WithLegacyKeyEnv_ReadsDesCiphertext()
+		{
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+			var desKey = "LegacyDesKey12345678";
+			var desCiphertext = new Encryptor(desKey).Encrypt("legacy-secret");
+
+			var (exitCode, stdout, stderr) = RunVconfig(
+				$"decrypt-value \"{desCiphertext}\" --key-env TEST_AES --legacy-key-env TEST_DES",
+				new Dictionary<string, string> { ["TEST_AES"] = aesKey, ["TEST_DES"] = desKey });
+
+			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
+			Assert.That(stdout, Is.EqualTo("legacy-secret"));
+		}
+
+		[Test]
+		public void Decrypt_JsonWithMixedV2AndDes_WithLegacyKey_DecryptsBoth()
+		{
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+			var desKey = "LegacyDesKey12345678";
+
+			using var aesCipher = new AesGcmCipherProvider(aesKey);
+			var aesWriter = new VersionedEncryptor(aesCipher, legacyDes: null, allowLegacyDes: false);
+			var desEncryptor = new Encryptor(desKey);
+
+			var json = new JsonObject
+			{
+				["modernSecret"] = aesWriter.Encrypt("modern-value"),
+				["legacySecret"] = desEncryptor.Encrypt("legacy-value"),
+				["plainText"] = "not encrypted",
+				["count"] = 42
+			};
+			var inputPath = Path.Combine(_tempDir, "mixed.json");
+			var outputPath = Path.Combine(_tempDir, "mixed.plain.json");
+			File.WriteAllText(inputPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_AES --legacy-key-env TEST_DES",
+				new Dictionary<string, string> { ["TEST_AES"] = aesKey, ["TEST_DES"] = desKey });
+
+			Assert.That(exitCode, Is.EqualTo(0), () => stderr);
+
+			var result = JsonNode.Parse(File.ReadAllText(outputPath))!.AsObject();
+			Assert.That(result["modernSecret"]!.GetValue<string>(), Is.EqualTo("modern-value"));
+			Assert.That(result["legacySecret"]!.GetValue<string>(), Is.EqualTo("legacy-value"));
+			Assert.That(result["plainText"]!.GetValue<string>(), Is.EqualTo("not encrypted"));
+			Assert.That(result["count"]!.GetValue<int>(), Is.EqualTo(42));
 		}
 
 		[Test]

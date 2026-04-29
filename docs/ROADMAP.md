@@ -341,9 +341,11 @@ vconfig decrypt-value "encrypted_text"
 | Wersja | Zakres zmian | Status |
 |--------|--------------|--------|
 | **v1.3.0-preview.5+** | CLI tool `vconfig` (preview) + CI/CD | ✅ Zakończone |
-| **v2.0.0** | Deprecation notices, CLI tool stable, SOLID refactoring, Edge case tests | 🔄 W trakcie |
+| **v2.0.0** | CLI tool stable, SOLID refactoring, Edge case tests | ✅ Zakończone |
+| **v2.3.0** | AES-256-GCM (ADR-010), `keygen`/`reencrypt`, deprecation reversed | ✅ Zakończone |
 | **v2.x.x** | Bug fixes, additional tests, examples | 📋 Planowane |
-| **v3.0.0** | **REMOVE encryption entirely** | 📋 Przyszłość |
+| **v3.0.0** | `AllowLegacyDes` domyślnie `false` (ADR-010 Phase 4) | 📋 Przyszłość |
+| **v4.0.0** | Usunięcie `LegacyDesCipherProvider` i kodu DES | 📋 Przyszłość |
 
 ---
 
@@ -351,13 +353,12 @@ vconfig decrypt-value "encrypted_text"
 
 ### Wersja 2.0
 - ✅ CLI tool `vconfig` dostępny na NuGet (CI/CD skonfigurowane)
-- ✅ Deprecation warnings w README i dokumentacji
-- ✅ ADR-003 i ADR-004 dokumentują decyzje
-- ✅ Migracja do SOPS udokumentowana
+- ✅ ADR-003 i ADR-004 dokumentują decyzje (ADR-003 częściowo zastąpiony przez ADR-010 w v2.3.0)
 - ✅ SOLID principles zastosowane
 - ✅ Nullable reference types włączone
 - ✅ 0 ostrzeżeń kompilatora
 - ✅ 109 testów jednostkowych (93 passing, 16 dokumentują brakującą walidację)
+- ⚠️ Deprecation warnings i SOPS migration guide — wprowadzone w v2.0, **odwrócone w v2.3.0** (ADR-010)
 
 ### Wersja 2.3.0 (AES-256-GCM — ADR-010) ✅ ZAKOŃCZONA
 

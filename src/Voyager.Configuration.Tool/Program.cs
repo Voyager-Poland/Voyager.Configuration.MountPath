@@ -472,7 +472,7 @@ static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor, string path
         var result = new JsonObject();
         foreach (var (key, val) in obj)
         {
-            result[key] = val != null ? DecryptJsonNode(val, encryptor, $"{path}.{key}") : null;
+            result[key] = val != null ? DecryptJsonNode(val, encryptor, AppendJsonPathKey(path, key)) : null;
         }
         return result;
     }
@@ -487,6 +487,33 @@ static JsonNode DecryptJsonNode(JsonNode node, IEncryptor encryptor, string path
         return result;
     }
     return node.DeepClone();
+}
+
+// JSONPath child accessor. Uses dot-notation for simple identifiers (`$.foo`) and
+// bracket-notation for keys with dots/special chars (`$['Microsoft.Hosting.Lifetime']`).
+// Without this, a config key like "Microsoft.Hosting.Lifetime" would render as
+// `$.Microsoft.Hosting.Lifetime` and look like three nested levels.
+static string AppendJsonPathKey(string path, string key)
+{
+    bool isSimpleIdentifier = key.Length > 0;
+    if (isSimpleIdentifier)
+    {
+        foreach (var c in key)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '_')
+            {
+                isSimpleIdentifier = false;
+                break;
+            }
+        }
+    }
+
+    if (isSimpleIdentifier)
+        return $"{path}.{key}";
+
+    // Bracket notation — escape backslashes first, then single quotes.
+    var escaped = key.Replace("\\", "\\\\").Replace("'", "\\'");
+    return $"{path}['{escaped}']";
 }
 
 static JsonNode ReencryptJsonNode(

@@ -450,8 +450,36 @@ namespace Voyager.Configuration.MountPath.Test
 
 			Assert.That(exitCode, Is.Not.EqualTo(0),
 				"decrypt of a plaintext value must fail (no silent fallthrough)");
-			Assert.That(stderr, Does.Contain("ConnectionString"),
-				"error message must reference the failing JSON path");
+			Assert.That(stderr, Does.Contain("$.Database.ConnectionString"),
+				"error must report the full JSON path, not just the leaf key");
+		}
+
+		[Test]
+		public void Decrypt_KeyWithDots_ReportedInBracketNotation()
+		{
+			// ASP.NET Core configs commonly use keys like "Microsoft.Hosting.Lifetime".
+			// Dot-notation would render that as `$.Microsoft.Hosting.Lifetime` — looks like
+			// three levels of nesting. Bracket notation disambiguates.
+			var aesKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+			var json = "{\n" +
+				"  \"Logging\": {\n" +
+				"    \"LogLevel\": {\n" +
+				"      \"Microsoft.Hosting.Lifetime\": \"plaintext-not-ciphertext\"\n" +
+				"    }\n" +
+				"  }\n" +
+				"}\n";
+			var inputPath = Path.Combine(_tempDir, "config.json");
+			var outputPath = Path.Combine(_tempDir, "out.json");
+			File.WriteAllText(inputPath, json);
+
+			var (exitCode, _, stderr) = RunVconfig(
+				$"decrypt --input \"{inputPath}\" --output \"{outputPath}\" --key-env TEST_KEY",
+				new Dictionary<string, string> { ["TEST_KEY"] = aesKey });
+
+			Assert.That(exitCode, Is.Not.EqualTo(0));
+			Assert.That(stderr, Does.Contain("$.Logging.LogLevel['Microsoft.Hosting.Lifetime']"),
+				"key with dots must be rendered in bracket notation");
 		}
 
 		[Test]

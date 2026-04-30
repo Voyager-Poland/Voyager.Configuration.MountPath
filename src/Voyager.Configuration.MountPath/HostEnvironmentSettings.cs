@@ -4,22 +4,21 @@ namespace Voyager.Configuration.MountPath
 {
 	internal class HostEnvironmentSettings : Voyager.Configuration.MountPath.SettingsProvider
 	{
-		private readonly IHostEnvironment hostEnvironment;
+		private readonly IHostEnvironment _hostEnvironment;
 
 		public HostEnvironmentSettings(IHostEnvironment hostEnvironment)
 		{
-			this.hostEnvironment = hostEnvironment;
+			_hostEnvironment = hostEnvironment;
 		}
 
 		public override Settings GetSettings(string filename = "appsettings")
 		{
 			var settings = base.GetSettings(filename);
-			settings.HostingName = hostEnvironment.EnvironmentName;
-			settings.CurrentDirectory = hostEnvironment.ContentRootPath;
+			settings.HostingName = _hostEnvironment.EnvironmentName;
+			settings.CurrentDirectory = _hostEnvironment.ContentRootPath;
 			return settings;
 		}
 	}
-
 
 	internal class ForceHostEnvironmentSettings : HostEnvironmentSettings
 	{

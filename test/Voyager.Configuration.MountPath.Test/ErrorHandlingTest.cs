@@ -83,7 +83,7 @@ namespace Voyager.Configuration.MountPath.Test
 		[Test]
 		public void CorruptedJson_TrailingComma_IsAllowedByDotNet()
 		{
-			// .NET JSON configuration provider allows trailing commas
+			// .NET JSON configuration _provider allows trailing commas
 			var trailingFile = Path.Combine(_testConfigPath, "trailing.json");
 			File.WriteAllText(trailingFile, @"{
 				""Key1"": ""Value1"",
@@ -206,7 +206,7 @@ namespace Voyager.Configuration.MountPath.Test
 		[Test]
 		public void ValidJsonWithComments_IsAllowedByDotNet()
 		{
-			// .NET JSON configuration provider supports comments (JsonCommentHandling.Skip)
+			// .NET JSON configuration _provider supports comments (JsonCommentHandling.Skip)
 			var commentedFile = Path.Combine(_testConfigPath, "commented.json");
 			File.WriteAllText(commentedFile, @"{
 				// This is a comment

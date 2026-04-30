@@ -7,11 +7,11 @@ namespace Voyager.Configuration.MountPath.Owin
 {
 	public class SimpleController : ApiController
 	{
-		private readonly IConfiguration configuration;
+		private readonly IConfiguration _configuration;
 
 		public SimpleController(IConfiguration configuration)
 		{
-			this.configuration = configuration;
+			_configuration = configuration;
 		}
 
 		[Route("api")]
@@ -21,7 +21,7 @@ namespace Voyager.Configuration.MountPath.Owin
 			{
 				Content = new ObjectContent<object>(new
 				{
-					Ustawienie = "Zmienna1 " + configuration["TestSetting"]
+					Ustawienie = "Zmienna1 " + _configuration["TestSetting"]
 				}, Configuration.Formatters.JsonFormatter)
 			};
 		}

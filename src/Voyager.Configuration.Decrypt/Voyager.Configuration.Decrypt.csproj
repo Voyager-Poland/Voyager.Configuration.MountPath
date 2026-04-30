@@ -2,8 +2,10 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- Single target for CLI tool -->
-    <TargetFramework>net8.0</TargetFramework>
+    <!-- Override global multi-targeting — CLI tools target net8.0 only (see docs/adr/0001-cli-tools-target-net8-only.md) -->
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>sgVoy.snk</AssemblyOriginatorKeyFile>
@@ -12,6 +14,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Voyager.Configuration.MountPath\Voyager.Configuration.MountPath.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
 </Project>

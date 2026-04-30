@@ -6,22 +6,22 @@ namespace Voyager.Configuration.MountPath.Test;
 
 public class SettingProviderFromHost : IHostEnvironment
 {
-	private SettingsProvider provider;
+	private SettingsProvider _provider;
 	private const string HOSTINGNAME = "MyVariableValue";
 
 	[SetUp]
 	public void Setup()
 	{
-		this.EnvironmentName = HOSTINGNAME;
-		this.ApplicationName = AppDomain.CurrentDomain.FriendlyName;
-		this.ContentRootPath = Directory.GetCurrentDirectory();
-		provider = this.GetSettingsProvider();
+		EnvironmentName = HOSTINGNAME;
+		ApplicationName = AppDomain.CurrentDomain.FriendlyName;
+		ContentRootPath = Directory.GetCurrentDirectory();
+		_provider = this.GetSettingsProvider();
 	}
 
 	[Test]
 	public void CheckSettings()
 	{
-		Settings settings = provider.GetSettings();
+		Settings settings = _provider.GetSettings();
 		Assert.IsNotNull(settings);
 		Assert.That(settings.HostingName, Is.EqualTo(HOSTINGNAME));
 		Assert.That(settings.CurrentDirectory, Is.EqualTo(Directory.GetCurrentDirectory()));

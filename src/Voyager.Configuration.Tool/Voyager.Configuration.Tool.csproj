@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- Override multi-targeting from Directory.Build.props - global tools should target one framework -->
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <!-- Override global multi-targeting — CLI tools target net10.0 only (see docs/adr/0001-cli-tools-target-net8-only.md) -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -41,7 +41,7 @@
     </ProjectReference>
 
     <!-- System.CommandLine for modern CLI parsing -->
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.7" />
   </ItemGroup>
 
 </Project>

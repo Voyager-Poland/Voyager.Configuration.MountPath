@@ -22,35 +22,37 @@
 using System.CommandLine;
 using Voyager.Configuration.MountPath.Encryption;
 
-var encryptedArg = new Argument<string>("encrypted", "The DES-encrypted value to decrypt");
+var encryptedArg = new Argument<string>("encrypted") { Description = "The DES-encrypted value to decrypt" };
 
-var keyEnvOption = new Option<string>(
-		aliases: new[] { "--key-env", "-e" },
-		getDefaultValue: () => "ASPNETCORE_ENCODEKEY",
-		description: "Name of the environment variable holding the DES key");
+var keyEnvOption = new Option<string>("--key-env", "-e")
+{
+	Description = "Name of the environment variable holding the DES key",
+	DefaultValueFactory = _ => "ASPNETCORE_ENCODEKEY"
+};
 
 var rootCommand = new RootCommand(
-		"DES Decrypt Tool - Decrypts a single value encrypted with the legacy DES cipher.\n" +
-		"Intended for reading values encrypted by Voyager.Configuration.MountPath v1.\n" +
-		"For new projects use Voyager.Configuration.Tool (AES-256-GCM).");
+	"DES Decrypt Tool - Decrypts a single value encrypted with the legacy DES cipher.\n" +
+	"Intended for reading values encrypted by Voyager.Configuration.MountPath v1.\n" +
+	"For new projects use Voyager.Configuration.Tool (AES-256-GCM).");
 
-rootCommand.AddArgument(encryptedArg);
-rootCommand.AddOption(keyEnvOption);
+rootCommand.Add(encryptedArg);
+rootCommand.Add(keyEnvOption);
 
-rootCommand.SetHandler((string encrypted, string keyEnv) =>
+rootCommand.SetAction(r =>
 {
-		var desKey = Environment.GetEnvironmentVariable(keyEnv);
-		if (string.IsNullOrEmpty(desKey))
-		{
-				Console.Error.WriteLine($"Error: Environment variable '{keyEnv}' is not set or empty.");
-				Environment.Exit(1);
-		}
+	var encrypted = r.GetValue(encryptedArg)!;
+	var keyEnv = r.GetValue(keyEnvOption)!;
 
-		var encryptor = new Encryptor(desKey!);
-		Console.WriteLine($"Encrypted  : {encrypted}");
-		Console.WriteLine($"Decrypted  : {encryptor.Decrypt(encrypted)}");
-},
-encryptedArg,
-keyEnvOption);
+	var desKey = Environment.GetEnvironmentVariable(keyEnv);
+	if (string.IsNullOrEmpty(desKey))
+	{
+		Console.Error.WriteLine($"Error: Environment variable '{keyEnv}' is not set or empty.");
+		Environment.Exit(1);
+	}
 
-return await rootCommand.InvokeAsync(args);
+	var encryptor = new Encryptor(desKey!);
+	Console.WriteLine($"Encrypted  : {encrypted}");
+	Console.WriteLine($"Decrypted  : {encryptor.Decrypt(encrypted)}");
+});
+
+return await rootCommand.Parse(args).InvokeAsync();

@@ -22,23 +22,27 @@
 using System.CommandLine;
 using Voyager.Configuration.MountPath.Encryption;
 
-var textArg = new Argument<string>("text", "The plain-text value to encrypt");
+var textArg = new Argument<string>("text") { Description = "The plain-text value to encrypt" };
 
-var keyEnvOption = new Option<string>(
-		aliases: new[] { "--key-env", "-e" },
-		getDefaultValue: () => "ASPNETCORE_ENCODEKEY",
-		description: "Name of the environment variable holding the DES key");
+var keyEnvOption = new Option<string>("--key-env", "-e")
+{
+		Description = "Name of the environment variable holding the DES key",
+		DefaultValueFactory = _ => "ASPNETCORE_ENCODEKEY"
+};
 
 var rootCommand = new RootCommand(
 		"DES Encrypt Tool - Encrypts a single value using the legacy DES cipher.\n" +
 		"Intended for generating values compatible with Voyager.Configuration.MountPath v1.\n" +
 		"For new projects use Voyager.Configuration.Tool (AES-256-GCM).");
 
-rootCommand.AddArgument(textArg);
-rootCommand.AddOption(keyEnvOption);
+rootCommand.Add(textArg);
+rootCommand.Add(keyEnvOption);
 
-rootCommand.SetHandler((string text, string keyEnv) =>
+rootCommand.SetAction(r =>
 {
+		var text = r.GetValue(textArg)!;
+		var keyEnv = r.GetValue(keyEnvOption)!;
+
 		var desKey = Environment.GetEnvironmentVariable(keyEnv);
 		if (string.IsNullOrEmpty(desKey))
 		{
@@ -49,8 +53,6 @@ rootCommand.SetHandler((string text, string keyEnv) =>
 		var encryptor = new Encryptor(desKey!);
 		Console.WriteLine($"Plain text : {text}");
 		Console.WriteLine($"Encrypted  : {encryptor.Encrypt(text)}");
-},
-textArg,
-keyEnvOption);
+});
 
-return await rootCommand.InvokeAsync(args);
+return await rootCommand.Parse(args).InvokeAsync();
